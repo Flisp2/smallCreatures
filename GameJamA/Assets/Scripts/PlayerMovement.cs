@@ -6,14 +6,19 @@ public class PlayerMovement : MonoBehaviour
 {
     [SerializeField] private float moveSpeed = 5f;
     [SerializeField] private Vector2 direction;
-    public GameObject bulletPrefab;
     public float Maxcooldown = 0.2f;
     [SerializeField] private float cooldown = 0f;
+    private Rigidbody2D rb;
+
+    private void Awake()
+    {
+        direction = Vector2.zero;
+        rb = GetComponent<Rigidbody2D>();
+    }
 
     private void Update()
     {
         MovePlayer();
-        shoot();
         if (cooldown > 0f)        {
             cooldown -= Time.deltaTime;
         }
@@ -30,29 +35,25 @@ public class PlayerMovement : MonoBehaviour
         float y = (kb.wKey.isPressed ? 1f : 0f) - (kb.sKey.isPressed ? 1f : 0f);
 
         direction = Vector2.ClampMagnitude(new Vector2(x, y), 1f);
-        transform.Translate(direction * moveSpeed * Time.deltaTime);
-    }
-
-    private void shoot()
-    {
-        var kb = Keyboard.current;
-        if (kb == null) return;
-
-        if (kb.spaceKey.isPressed && cooldown <= 0f)
+        Vector2 targetVelocity = direction * moveSpeed;
+        float currentSpeed = rb.linearVelocity.magnitude;
+        float targetSpeed = targetVelocity.magnitude;
+        
+        if (targetSpeed > currentSpeed)
         {
-            Vector2 shootDirection = direction.normalized;
-
-            if (shootDirection == Vector2.zero)
-            {
-                shootDirection = Vector2.up;
-            }
-
-            float angle = Mathf.Atan2(shootDirection.y, shootDirection.x) * Mathf.Rad2Deg - 90f;
-            GameObject bullet = Instantiate(bulletPrefab, transform.position, Quaternion.AngleAxis(angle, Vector3.forward));
-            bullet.GetComponent<Rigidbody2D>().linearVelocity = shootDirection * 10f;
-
-            Destroy(bullet, 2f);
-            cooldown = Maxcooldown;
+            rb.linearVelocity = Vector2.Lerp(rb.linearVelocity, targetVelocity, Time.deltaTime * 10f);
+        }
+        if (rb.linearVelocity.x < 0f || rb.linearVelocity.y < 0f)
+        {
+            rb.angularVelocity = Mathf.Lerp(rb.angularVelocity, -50f, Time.deltaTime * 200f);
+        }
+        else if (rb.linearVelocity.x > 0f || rb.linearVelocity.y > 0f)
+        {
+            rb.angularVelocity = Mathf.Lerp(rb.angularVelocity, 50f, Time.deltaTime * 200f);
+        }
+        else
+        {
+            rb.angularVelocity = Mathf.Lerp(rb.angularVelocity, 0f, Time.deltaTime * 200f);
         }
     }
 }
