@@ -105,10 +105,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0754cac77a6b809448aff20168258014, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMovement
-  moveSpeed: 10
   direction: {x: 0, y: 0}
-  Maxcooldown: 0.2
   cooldown: 0
+  defence: 1
+  maxHealth: 100
+  currentHealth: 100
+  stunTime: 0
+  speed: 5
+  ability1: {fileID: 0}
+  ability2: {fileID: 0}
 --- !u!50 &2523690255338992973
 Rigidbody2D:
   serializedVersion: 5
