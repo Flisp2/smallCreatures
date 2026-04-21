@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git -C /c/Users/Michael/Repositories/smallCreatures log --all --oneline)"
+      "Bash(git -C /c/Users/Michael/Repositories/smallCreatures log --all --oneline)",
+      "Bash(xargs grep *)",
+      "Bash(xargs wc *)"
     ]
   }
 }

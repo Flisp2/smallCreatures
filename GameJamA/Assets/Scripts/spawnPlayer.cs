@@ -7,6 +7,8 @@ public class spawnPlayer : MonoBehaviour
 
     private void Start()
     {
+        // Yield to VesselGenerator when present — it spawns the player at the vessel root
+        if (FindFirstObjectByType<VesselGenerator>() != null) return;
         Instantiate(playerPrefab, spawnPosition, Quaternion.identity);
     }
 }
