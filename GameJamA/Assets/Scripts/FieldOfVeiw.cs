@@ -76,6 +76,14 @@ public class FieldOfView : MonoBehaviour
                 // Convert world hit point to local space relative to transform
                 Vector3 worldHitPoint = new Vector3(hit.point.x, hit.point.y, origin.z);
                 vertex = transform.InverseTransformPoint(worldHitPoint);
+                
+                // Get the object that was hit
+                GameObject hitObject = hit.collider.gameObject;
+                if (hitObject.CompareTag("Player"))
+                {
+                    transform.parent.GetComponent<WBCcode>().SetTarget(hitObject.transform);
+                }
+                
             }
 
             vertices[vertexIndex] = vertex;
