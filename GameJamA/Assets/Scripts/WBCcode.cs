@@ -1,20 +1,10 @@
 using UnityEngine;
+using UnityEngine.AI;
 
 public class WBCcode : MonoBehaviour
 {
     [SerializeField] private WBCState currentState;
-    private enum WBCState
-    {
-        Patrolling,
-        Chasing,
-        Attacking,
-        Stunned
-    }
-
-    [Header("Detection")]
-    [SerializeField] private float detectionRange = 6f;
-    [SerializeField] private float attackRange = 1.5f;
-    [SerializeField] private LayerMask targetLayer;
+    private enum WBCState { Patrolling, Chasing, Attacking, Stunned }
 
     [Header("Movement")]
     [SerializeField] private float moveSpeed = 3f;
@@ -22,97 +12,105 @@ public class WBCcode : MonoBehaviour
     [SerializeField] private Transform[] patrolPoints;
 
     [Header("Combat")]
-    [SerializeField] private float attackCooldown = 1f;
+    [SerializeField] private float attackRange = 3f;
+    [SerializeField] private float chargeTime = 2f;
     [SerializeField] private float stunDuration = 2f;
+    [SerializeField] private float rotationSpeed = 5f;
 
     public Transform target;
+    public Transform lastSeenTarget;
+    public bool seesTarget;
+
+    private NavMeshAgent agent;
     private Rigidbody2D rb;
     private int patrolIndex;
-    private float attackTimer;
+    public float attackTimer;
     private float stunTimer;
-
     private void Start()
     {
+        agent = GetComponent<NavMeshAgent>();
+        agent.updatePosition = false;
+        agent.updateRotation = false;
+        agent.updateUpAxis = false;
         rb = GetComponent<Rigidbody2D>();
+        rb.freezeRotation = true;
         currentState = WBCState.Patrolling;
     }
 
     private void Update()
     {
-        attackTimer -= Time.deltaTime;
-
+        if (seesTarget)
+        {
+            attackTimer -= Time.deltaTime;
+            lastSeenTarget = target;
+            currentState = WBCState.Attacking;
+        }
+        else
+        {
+            attackTimer = chargeTime;
+            currentState = WBCState.Chasing;
+            if (lastSeenTarget == null)
+            currentState = WBCState.Patrolling;
+        }
         switch (currentState)
         {
             case WBCState.Patrolling: HandlePatrol();  break;
-            case WBCState.Chasing:   HandleChase();    break;
-            case WBCState.Attacking: HandleAttack();   break;
-            case WBCState.Stunned:   HandleStunned();  break;
+            case WBCState.Chasing:   HandleChase();   break;
+            case WBCState.Attacking: HandleAttack();  break;
+            case WBCState.Stunned:   HandleStunned(); break;
         }
+
+        agent.nextPosition = transform.position;
+        if (agent.desiredVelocity.sqrMagnitude > 0.01f)
+            LookAt2D((Vector2)transform.position + (Vector2)agent.desiredVelocity);
+        else if (target != null)
+            LookAt2D(target.position);
+
     }
 
     // ── States ────────────────────────────────────────────────────────────────
 
+    private Vector2 patrolTarget;
+    private bool hasPatrolTarget;
+
     private void HandlePatrol()
     {
-        if (patrolPoints == null || patrolPoints.Length == 0) return;
+        if (!hasPatrolTarget || Vector2.Distance(transform.position, patrolTarget) <= 0.5f)
+        {
+            if (TryGetRandomNavMeshPoint(out Vector2 point))
+            {
+                patrolTarget = point;
+                hasPatrolTarget = true;
+                agent.SetDestination(patrolTarget);
+            }
+        }
 
-        // Move towards the current patrol point
-        Transform goal = patrolPoints[patrolIndex];
-        MoveTowards(goal.position, patrolSpeed);
-
-        if (Vector2.Distance(transform.position, goal.position) < 0.2f)
-            patrolIndex = (patrolIndex + 1) % patrolPoints.Length;
+        agent.speed = patrolSpeed;
+        rb.linearVelocity = (Vector2)agent.desiredVelocity.normalized * patrolSpeed;
     }
-
     private void HandleChase()
     {
-        if (target == null) { currentState = WBCState.Patrolling; return; }
-
-        float dist = Vector2.Distance(transform.position, target.position);
-
-        if (dist > detectionRange)
+        if (Vector2.Distance(transform.position, lastSeenTarget.position) <= 0.5f)
         {
-            target = null;
             currentState = WBCState.Patrolling;
-            return;
         }
-
-        if (dist <= attackRange)
-        {
-            currentState = WBCState.Attacking;
-            return;
-        }
-
-        MoveTowards(target.position, moveSpeed);
     }
-
     private void HandleAttack()
     {
-        if (target == null) { currentState = WBCState.Patrolling; return; }
-
-        float dist = Vector2.Distance(transform.position, target.position);
-
-        // Target moved out of attack range — chase again
-        if (dist > attackRange)
-        {
-            currentState = WBCState.Chasing;
-            return;
-        }
-
+        rb.linearVelocity = Vector2.zero;
+        attackTimer -= Time.deltaTime;
+        LookAt2D(target.position);
         if (attackTimer <= 0f)
         {
-            attackTimer = attackCooldown;
-            PerformAttack();
+            PerformAttack();            
         }
     }
-
-    private void HandleStunned()
+    public void HandleStunned()
     {
-        stunTimer -= Time.deltaTime;
         rb.linearVelocity = Vector2.zero;
-
+        stunTimer -= Time.deltaTime;
         if (stunTimer <= 0f)
-            currentState = target != null ? WBCState.Chasing : WBCState.Patrolling;
+            currentState = WBCState.Chasing;
     }
 
     // ── Actions ───────────────────────────────────────────────────────────────
@@ -121,13 +119,12 @@ public class WBCcode : MonoBehaviour
     {
         if (target == null) return;
         Vector2 chargeDir = ((Vector2)target.position - (Vector2)transform.position).normalized;
-        rb.AddForce(chargeDir * 5f, ForceMode2D.Impulse);
+        rb.AddForce(chargeDir * 30f, ForceMode2D.Impulse);
     }
 
     public void SetTarget(Transform newTarget)
     {
         target = newTarget;
-        currentState = WBCState.Chasing;
     }
 
     public void Stun()
@@ -138,25 +135,36 @@ public class WBCcode : MonoBehaviour
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
-    private void MoveTowards(Vector2 goal, float speed)
+    private bool TryGetRandomNavMeshPoint(out Vector2 result)
     {
-        Vector2 direction = ((Vector3)goal - transform.position).normalized;
-        LookAt2D(goal);
-        Vector2 targetVelocity = direction * speed;
-        float currentSpeed = rb.linearVelocity.magnitude;
-        float targetSpeed = targetVelocity.magnitude;
-        
-        if (targetSpeed > currentSpeed)
+        for (int i = 0; i < 10; i++)
         {
-            rb.linearVelocity = Vector2.Lerp(rb.linearVelocity, targetVelocity, Time.deltaTime * 10f);
+            Vector2 randomDir = Random.insideUnitCircle * 10f;
+            Vector3 candidate = transform.position + new Vector3(randomDir.x, randomDir.y, 0f);
+            if (NavMesh.SamplePosition(candidate, out NavMeshHit hit, 10f, NavMesh.AllAreas))
+            {
+                result = new Vector2(hit.position.x, hit.position.y);
+                return true;
+            }
         }
+        result = transform.position;
+        return false;
     }
 
     private void LookAt2D(Vector2 goal)
     {
         Vector2 direction = (goal - (Vector2)transform.position).normalized;
+        if (direction == Vector2.zero) return;
         float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-        transform.rotation = Quaternion.AngleAxis(angle, Vector3.forward);
+        Quaternion targetRot = Quaternion.AngleAxis(angle, Vector3.forward);
+        transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRot, rotationSpeed * 360f * Time.deltaTime);
+    }
+
+    public void SetPatrolPoints(Transform[] points)
+    {
+        patrolPoints = points;
+        patrolIndex = 0;
     }
 }
+
 

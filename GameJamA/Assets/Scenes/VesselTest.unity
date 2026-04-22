@@ -464,8 +464,8 @@ MonoBehaviour:
   radiusDecay: 0.7
   minSegmentLength: 10
   maxSegmentLength: 20
-  branchAngle: 20
-  branchAngleVariance: 10
+  branchAngle: 50
+  branchAngleVariance: 20
   straightChance: 0.15
   arteryColor: {r: 0.85, g: 0.12, b: 0.12, a: 1}
   veinColor: {r: 0.12, g: 0.22, b: 0.8, a: 1}
