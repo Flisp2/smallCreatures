@@ -70,7 +70,7 @@ public class FieldOfView : MonoBehaviour
 
                 if (hit.collider.CompareTag("Player"))
                 {
-                    wbc.SetTarget(hit.collider.transform);
+                    wbc.SetTarget(hit.collider.transform.position);
                     sawTarget = true;
                 }
             }

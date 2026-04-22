@@ -133,6 +133,7 @@ GameObject:
   - component: {fileID: 280794214}
   - component: {fileID: 280794216}
   - component: {fileID: 280794217}
+  - component: {fileID: 280794218}
   m_Layer: 0
   m_Name: WhiteBloodCell
   m_TagString: Enemy
@@ -228,20 +229,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: '::'
   currentState: 0
-  slowSpeed: 2
-  mediumSpeed: 4
-  fastSpeed: 6
+  moveSpeed: 3
+  patrolSpeed: 1.5
   patrolPoints: []
-  chargeTime: 20
+  attackRange: 3
+  chargeTime: 2
   stunDuration: 2
-  rotationSpeed: 10
-  target: {x: 0, y: 0}
+  rotationSpeed: 1
+  target: {fileID: 0}
+  lastSeenTarget: {fileID: 0}
   seesTarget: 0
-  searchPoint: {x: 0, y: 0}
-  searchAreaRadius: 5
   attackTimer: 0
-  searchAreaPrefab: {fileID: 3719057292048811324, guid: 490e84534085d084587b1731e5bb179c, type: 3}
-  hunting: 0
 --- !u!50 &280794214
 Rigidbody2D:
   serializedVersion: 5
@@ -327,6 +325,18 @@ CircleCollider2D:
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0}
   m_Radius: 0.5
+--- !u!114 &280794218
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 280794207}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3191e0588d6ad78429ce268e4e809d4c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DebugClickMove
 --- !u!1 &327295322
 GameObject:
   m_ObjectHideFlags: 0
