@@ -469,7 +469,7 @@ MonoBehaviour:
   straightChance: 0.15
   arteryColor: {r: 0.85, g: 0.12, b: 0.12, a: 1}
   veinColor: {r: 0.12, g: 0.22, b: 0.8, a: 1}
-  debugWalls: 1
+  debugWalls: 0
   playerPrefab: {fileID: 1895250868}
   spawnPlayer: 0
 --- !u!4 &1114167943
