@@ -17,6 +17,8 @@ public class WBCcode : MonoBehaviour
     [SerializeField] private float stunDuration = 2f;
     [SerializeField] private float rotationSpeed = 5f;
 
+    public Transform testTarget;
+
     public Vector2 target;
     public bool seesTarget;
     public Vector2 searchPoint;
@@ -75,6 +77,8 @@ public class WBCcode : MonoBehaviour
             case WBCState.Stunned:   HandleStunned(); break;
         }
 
+        testTarget.position = searchPoint;
+
         // Drive the rigidbody from the NavMesh path
         if (currentState != WBCState.Attacking && currentState != WBCState.Stunned)
             rb.linearVelocity = agent.desiredVelocity;
@@ -94,32 +98,31 @@ public class WBCcode : MonoBehaviour
 
     private void HandlePatrol()
     {
-        agent.speed = slowSpeed;  
+        agent.speed = slowSpeed;
+        searchPoint = startPosition;  
         patrol();
     }
     private void HandleChase()
     {
         agent.speed = fastSpeed;
         agent.SetDestination(target);
+        searchPoint = target;
         if (Vector2.Distance(transform.position, target) <= 0.5f)
         {
             target = Vector2.zero;
             hunting = true;
             searchTimer = 10f;
-            agent.SetDestination(searchPoint);
             currentState = WBCState.Searching;
         }
     }
     private void HandleSearch()
     {
         agent.speed = mediumSpeed;
-        searchPoint = target;
         searchTimer -= Time.deltaTime;
         if (searchTimer <= 0f)
         {
             hunting = false;
             hasPatrolTarget = false;
-            searchPoint = startPosition;
             currentState = WBCState.Patrolling;
             return;
         }
