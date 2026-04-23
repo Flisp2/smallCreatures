@@ -101,8 +101,17 @@ public class VesselGenerator : MonoBehaviour
             list.Add(e);
         }
 
+        // Build parent-edge lookup so outer wall intersections can reference the incoming segment
+        var parentEdge = new Dictionary<VesselNode, VesselEdge>();
+        foreach (var e in _edges)
+            parentEdge[e.to] = e;
+
         // For each branching junction, compute where the two inner walls intersect
-        var innerWallStart = new Dictionary<VesselEdge, Vector2>();
+        // and where each outer wall ray exits the parent vessel's outer wall line.
+        var innerWallStart  = new Dictionary<VesselEdge, Vector2>();
+        var outerWallStart  = new Dictionary<VesselEdge, Vector2>();
+        var wallEndPlusPerp = new Dictionary<VesselEdge, Vector2>(); // end of parent's +perp wall
+        var wallEndMinusPerp= new Dictionary<VesselEdge, Vector2>(); // end of parent's -perp wall
 
         foreach (var (junction, children) in childEdges)
         {
@@ -138,14 +147,51 @@ public class VesselGenerator : MonoBehaviour
                     innerWallStart[eR] = meet;
                 }
             }
+
+            // Outer wall starts: intersect each child's outer wall ray with the
+            // corresponding side of the parent vessel's outer wall line.
+            // Left ray:  from j + pL*r along dL  vs. parent left wall through j + parentPerp*r
+            // Right ray: from j - pR*r along dR  vs. parent right wall through j - parentPerp*r
+            if (parentEdge.TryGetValue(junction, out VesselEdge pe))
+            {
+                Vector2 parentDir  = (j - pe.from.pos).normalized;
+                Vector2 parentPerp = new Vector2(-parentDir.y, parentDir.x);
+
+                float crossL = dL.x * parentDir.y - dL.y * parentDir.x; // dL × parentDir
+                if (Mathf.Abs(crossL) > 1e-4f)
+                {
+                    Vector2 diffL = parentPerp - pL;
+                    float tL = r * (diffL.x * parentDir.y - diffL.y * parentDir.x) / crossL;
+                    if (tL >= 0f)
+                    {
+                        outerWallStart[eL]   = j + pL * r + tL * dL;
+                        wallEndPlusPerp[pe]  = outerWallStart[eL]; // parent +perp wall ends here
+                    }
+                }
+
+                float crossR = dR.x * parentDir.y - dR.y * parentDir.x; // dR × parentDir
+                if (Mathf.Abs(crossR) > 1e-4f)
+                {
+                    Vector2 diffR = pR - parentPerp;
+                    float tR = r * (diffR.x * parentDir.y - diffR.y * parentDir.x) / crossR;
+                    if (tR >= 0f)
+                    {
+                        outerWallStart[eR]    = j - pR * r + tR * dR;
+                        wallEndMinusPerp[pe]  = outerWallStart[eR]; // parent -perp wall ends here
+                    }
+                }
+            }
         }
 
         var hasChildren = new HashSet<VesselNode>(childEdges.Keys);
 
         foreach (var e in _edges)
         {
-            innerWallStart.TryGetValue(e, out Vector2 meet);
-            MakeCorridor(e, root, innerWallStart.ContainsKey(e) ? meet : (Vector2?)null);
+            Vector2? iStart  = innerWallStart .TryGetValue(e, out Vector2 im) ? im : (Vector2?)null;
+            Vector2? oStart  = outerWallStart .TryGetValue(e, out Vector2 om) ? om : (Vector2?)null;
+            Vector2? endPlus = wallEndPlusPerp .TryGetValue(e, out Vector2 ep) ? ep : (Vector2?)null;
+            Vector2? endMinus= wallEndMinusPerp.TryGetValue(e, out Vector2 en) ? en : (Vector2?)null;
+            MakeCorridor(e, root, iStart, oStart, endPlus, endMinus);
         }
 
         foreach (var n in _nodes)
@@ -156,7 +202,9 @@ public class VesselGenerator : MonoBehaviour
         }
     }
 
-    void MakeCorridor(VesselEdge e, GameObject parent, Vector2? innerStart = null)
+    void MakeCorridor(VesselEdge e, GameObject parent,
+        Vector2? innerStart = null, Vector2? outerStart = null,
+        Vector2? wallEndPlusPerp = null, Vector2? wallEndMinusPerp = null)
     {
         var go = new GameObject($"Seg_{e.from.depth}_{e.to.depth}");
         go.transform.SetParent(parent.transform);
@@ -178,25 +226,25 @@ public class VesselGenerator : MonoBehaviour
         lr.startColor = lr.endColor = col;
         lr.sortingOrder = -2;
 
-        Vector2 outerStart = a;  // outer wall always starts at the junction node
-        Vector2 wallEnd    = b;
+        Vector2 endPlus  = wallEndPlusPerp  ?? b + perp * e.to.radius;
+        Vector2 endMinus = wallEndMinusPerp ?? b - perp * e.to.radius;
 
         if (e.side == BranchSide.Left)
         {
             // +perp = outer (left side),  -perp = inner (meets sibling)
-            AddWall(go, outerStart + perp * e.from.radius, wallEnd + perp * e.to.radius);
-            AddWall(go, innerStart ?? a - perp * e.from.radius, wallEnd - perp * e.to.radius);
+            AddWall(go, outerStart ?? a + perp * e.from.radius, endPlus);
+            AddWall(go, innerStart ?? a - perp * e.from.radius, endMinus);
         }
         else if (e.side == BranchSide.Right)
         {
             // -perp = outer (right side), +perp = inner (meets sibling)
-            AddWall(go, innerStart ?? a + perp * e.from.radius, wallEnd + perp * e.to.radius);
-            AddWall(go, outerStart - perp * e.from.radius, wallEnd - perp * e.to.radius);
+            AddWall(go, innerStart ?? a + perp * e.from.radius, endPlus);
+            AddWall(go, outerStart ?? a - perp * e.from.radius, endMinus);
         }
         else
         {
-            AddWall(go, a + perp * e.from.radius, b + perp * e.to.radius);
-            AddWall(go, a - perp * e.from.radius, b - perp * e.to.radius);
+            AddWall(go, a + perp * e.from.radius, endPlus);
+            AddWall(go, a - perp * e.from.radius, endMinus);
         }
     }
 
