@@ -232,14 +232,16 @@ MonoBehaviour:
   slowSpeed: 2
   mediumSpeed: 4
   fastSpeed: 6
-  chargeTime: 20
+  chargeTime: 2
   stunDuration: 2
   rotationSpeed: 10
+  attackDamage: 5
   testTarget: {fileID: 670058206}
   target: {x: 0, y: 0}
   seesTarget: 0
   searchPoint: {x: 0, y: 0}
   searchAreaRadius: 5
+  isStunned: 0
   attackTimer: 0
   searchAreaPrefab: {fileID: 3719057292048811324, guid: 490e84534085d084587b1731e5bb179c, type: 3}
   hunting: 0

@@ -8,9 +8,8 @@ public class PlayerCode : MonoBehaviour
     private Rigidbody2D rb;
 
     //Player Stats//
-    public float defence = 1f;
-    public float maxHealth = 100f;
-    [SerializeField] private float currentHealth = 100f;
+    public float maxHealth = 10f;
+    [SerializeField] private float currentHealth = 10f;
     public float stunTime = 0f;
     public float speed = 5f;
 
@@ -98,16 +97,26 @@ public class PlayerCode : MonoBehaviour
     }
     public void TakeDamage(float damage)
     {
-        float effectiveDamage = Mathf.Max(damage / defence, 1f);
-        currentHealth -= effectiveDamage;
+        currentHealth -= damage;
         if (currentHealth <= 0f)
         {
             Die();
         }
     }
 
+    public void UpdateColliderScale(Vector2 newSize)
+    {
+        CircleCollider2D collider = GetComponent<CircleCollider2D>();
+        if (collider != null)
+        {
+            collider.radius = newSize.x;
+
+        }
+    }
+
     private void Die()
     {
-        // Handle player death logic here
+        Debug.Log("Player has died.");
+        // Implement death behavior (e.g., respawn, game over screen)
     }
 }

@@ -15,6 +15,7 @@ public class WBCcode : MonoBehaviour
     [SerializeField] private float chargeTime = 2f;
     [SerializeField] private float stunDuration = 2f;
     [SerializeField] private float rotationSpeed = 5f;
+    [SerializeField] private int attackDamage = 5;
 
     public Transform testTarget;
 
@@ -22,10 +23,13 @@ public class WBCcode : MonoBehaviour
     public bool seesTarget;
     public Vector2 searchPoint;
     public float searchAreaRadius = 5f;
+    public bool isStunned;
     private Vector2 startPosition;
 
     private NavMeshAgent agent;
     private Rigidbody2D rb;
+    private Animator ani;
+    private GameObject FOV;
     private int patrolIndex;
     public float attackTimer;
     private float stunTimer;
@@ -39,6 +43,8 @@ public class WBCcode : MonoBehaviour
         agent.updateRotation = false;
         agent.updateUpAxis = false;
         rb = GetComponent<Rigidbody2D>();
+        ani = GetComponent<Animator>();
+        FOV = transform.Find("FOV").gameObject;
         rb.freezeRotation = true;
         currentState = WBCState.Patrolling;
     }
@@ -53,6 +59,13 @@ public class WBCcode : MonoBehaviour
 
     private void Update()
     {
+        agent.nextPosition = transform.position;
+        if (isStunned) 
+        {
+            currentState = WBCState.Stunned;
+            HandleStunned();
+            return;
+        }
         if (seesTarget)
         {
             attackTimer -= Time.deltaTime;
@@ -81,8 +94,6 @@ public class WBCcode : MonoBehaviour
         // Drive the rigidbody from the NavMesh path
         if (currentState != WBCState.Attacking && currentState != WBCState.Stunned)
             rb.linearVelocity = agent.desiredVelocity;
-
-        agent.nextPosition = transform.position;
         if (agent.desiredVelocity.sqrMagnitude > 0.01f)
             LookAt2D((Vector2)transform.position + (Vector2)agent.desiredVelocity);
         else if (target != Vector2.zero)
@@ -135,14 +146,27 @@ public class WBCcode : MonoBehaviour
         LookAt2D(target);
         if (attackTimer <= 0f)
         {
-            PerformAttack();            
+            Stun();
+            PerformAttack();  
         }
     }
     public void HandleStunned()
     {
+        attackTimer = chargeTime;
         stunTimer -= Time.deltaTime;
+        FOV.SetActive(false);
+        ani.SetBool("isStunned", true);
+        agent.speed = 0f;
+        rb.freezeRotation = false;
+        isStunned = true;
         if (stunTimer <= 0f)
+        {
+            rb.freezeRotation = true;
+            FOV.SetActive(true);
+            isStunned = false;
+            ani.SetBool("isStunned", false);
             currentState = WBCState.Chasing;
+        }
     }
 
     // ── Actions ───────────────────────────────────────────────────────────────
@@ -182,8 +206,25 @@ public class WBCcode : MonoBehaviour
 
     public void Stun()
     {
+        isStunned = true;
         stunTimer = stunDuration;
         currentState = WBCState.Stunned;
+    }
+
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (currentState == WBCState.Stunned)
+        {
+            if (collision.gameObject.CompareTag("Player") )
+            {
+                PlayerCode player = collision.gameObject.GetComponent<PlayerCode>();
+                if (player != null)
+                {
+                    player.TakeDamage(attackDamage);
+                }
+            }
+            rb.linearVelocity = -rb.linearVelocity * 0.1f; // Bounce back with reduced speed
+        }
     }
     // ── Helpers ───────────────────────────────────────────────────────────────
 
@@ -194,6 +235,7 @@ public class WBCcode : MonoBehaviour
         float angle = Mathf.LerpAngle(transform.eulerAngles.z, targetAngle, rotationSpeed * Time.deltaTime);
         transform.rotation = Quaternion.Euler(0, 0, angle);
     }
+
 }
 
 
