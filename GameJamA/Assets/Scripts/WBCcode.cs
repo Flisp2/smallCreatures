@@ -10,7 +10,6 @@ public class WBCcode : MonoBehaviour
     [SerializeField] private float slowSpeed = 2f;
     [SerializeField] private float mediumSpeed = 4f;
     [SerializeField] private float fastSpeed = 6f;
-    [SerializeField] private Transform[] patrolPoints;
 
     [Header("Combat")]
     [SerializeField] private float chargeTime = 2f;

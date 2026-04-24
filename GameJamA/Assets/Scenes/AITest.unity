@@ -133,6 +133,7 @@ GameObject:
   - component: {fileID: 280794214}
   - component: {fileID: 280794216}
   - component: {fileID: 280794217}
+  - component: {fileID: 280794218}
   m_Layer: 0
   m_Name: WhiteBloodCell
   m_TagString: Enemy
@@ -189,8 +190,8 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 1
   m_MaskInteraction: 0
-  m_Sprite: {fileID: -2413806693520163455, guid: 4adeaf2d2b1c7417e89f026626d8264f, type: 3}
-  m_Color: {r: 1, g: 0, b: 0, a: 1}
+  m_Sprite: {fileID: -7885998568022263959, guid: f7ad2254fb5cc1d40bfa2a98098c3232, type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -231,7 +232,6 @@ MonoBehaviour:
   slowSpeed: 2
   mediumSpeed: 4
   fastSpeed: 6
-  patrolPoints: []
   chargeTime: 20
   stunDuration: 2
   rotationSpeed: 10
@@ -326,8 +326,30 @@ CircleCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0}
-  m_Radius: 0.5
+  m_Offset: {x: -0.0067893863, y: 0}
+  m_Radius: 0.3212127
+--- !u!95 &280794218
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 280794207}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 840dc3c495f07924892405acb7dc42c1, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &327295322
 GameObject:
   m_ObjectHideFlags: 0
@@ -633,7 +655,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 22889526b35e7ab45893c621dea32137, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CameraFollow
-  target: {fileID: 0}
+  target: {fileID: 782266109}
   smoothTime: 0.25
 --- !u!1001 &572620552
 PrefabInstance:
@@ -695,6 +717,10 @@ PrefabInstance:
       propertyPath: ability1
       value: 
       objectReference: {fileID: 11400000, guid: 38e91cdf6f4129e47a78151de5633015, type: 2}
+    - target: {fileID: 7155131131219911805, guid: f83c708e3710ba246b8caaf8523e26ec, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: -4036936546935842885, guid: ba3eb4fa96587354995ff1757360940e, type: 3}
     - target: {fileID: 7307479787892297838, guid: f83c708e3710ba246b8caaf8523e26ec, type: 3}
       propertyPath: m_Name
       value: MainCharacter
@@ -710,6 +736,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 7307479787892297838, guid: f83c708e3710ba246b8caaf8523e26ec, type: 3}
       insertIndex: -1
       addedObject: {fileID: 782266104}
+    - targetCorrespondingSourceObject: {fileID: 7307479787892297838, guid: f83c708e3710ba246b8caaf8523e26ec, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 782266114}
   m_SourcePrefab: {fileID: 100100000, guid: f83c708e3710ba246b8caaf8523e26ec, type: 3}
 --- !u!1 &670058204
 GameObject:
@@ -843,6 +872,33 @@ CircleCollider2D:
   m_CompositeOrder: 0
   m_Offset: {x: 0.012009889, y: 0}
   m_Radius: 0.24593094
+--- !u!4 &782266109 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 2333114940440314381, guid: f83c708e3710ba246b8caaf8523e26ec, type: 3}
+  m_PrefabInstance: {fileID: 572620552}
+  m_PrefabAsset: {fileID: 0}
+--- !u!95 &782266114
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 782266099}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: c55b6743e26330d4b8fc8e968bde5afb, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &1178992069
 GameObject:
   m_ObjectHideFlags: 0
@@ -903,11 +959,11 @@ MonoBehaviour:
   m_OverrideTileSize: 0
   m_TileSize: 256
   m_OverrideVoxelSize: 0
-  m_VoxelSize: 0.33333334
+  m_VoxelSize: 0.16666667
   m_BuildHeightMesh: 0
   m_MinRegionArea: 0
   m_HideEditorLogs: 0
-  m_NavMeshData: {fileID: 23800000, guid: 726ec66e0df14ab4f9c1962568a9aca3, type: 2}
+  m_NavMeshData: {fileID: 23800000, guid: d4dc8251917e51b41b92ff55ead2b6e9, type: 2}
 --- !u!4 &1178992072
 Transform:
   m_ObjectHideFlags: 0
@@ -954,9 +1010,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9fabffa11d6df414b9060e8204607b12, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
-  fov: 50
+  fov: 70
   rayCount: 150
-  viewDistance: 5
+  viewDistance: 4
 --- !u!4 &1866818186
 Transform:
   m_ObjectHideFlags: 0
