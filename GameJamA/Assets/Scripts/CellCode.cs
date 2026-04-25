@@ -6,7 +6,11 @@ public class CellCode : MonoBehaviour
     {
         if (collision.CompareTag("Player"))
         {
-            
+            PlayerCode playerCode = collision.GetComponent<PlayerCode>();
+            if (playerCode != null)
+            {
+                playerCode.TakeDamage(1f);
+            }
         }
     }
 }

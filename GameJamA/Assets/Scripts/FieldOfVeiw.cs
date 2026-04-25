@@ -68,7 +68,7 @@ public class FieldOfView : MonoBehaviour
             {
                 vertex = transform.InverseTransformPoint(new Vector3(hit.point.x, hit.point.y, origin.z));
 
-                if (hit.collider.CompareTag("Player"))
+                if (hit.collider.CompareTag("Player") && hit.collider.GetComponent<PlayerCode>().isHidden == false)
                 {
                     wbc.SetTarget(hit.collider.transform.position);
                     sawTarget = true;

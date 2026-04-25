@@ -12,6 +12,8 @@ public class PlayerCode : MonoBehaviour
     [SerializeField] private float currentHealth = 10f;
     public float stunTime = 0f;
     public float speed = 5f;
+    public float baseSpeed = 5f;
+    public bool isHidden = false;
 
     private Keyboard kb;
     private Mouse ms;
@@ -72,6 +74,14 @@ public class PlayerCode : MonoBehaviour
 
     private void AbilityCheck()
     {
+        if (ability1 != null)
+        {
+            ability1.UpdateTimer();
+        }
+        if (ability2 != null)
+        {
+            ability2.UpdateTimer();
+        }
         if (ms.rightButton.wasPressedThisFrame)
         {
             if (ability1 != null)
