@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
+using NavMeshPlus.Components;
+using NavMeshPlus.Extensions;
 
 public class VesselGenerator : MonoBehaviour
 {
@@ -18,6 +20,7 @@ public class VesselGenerator : MonoBehaviour
     public Color arteryColor = new Color(0.85f, 0.12f, 0.12f);
     public Color veinColor   = new Color(0.12f, 0.22f, 0.80f);
     public bool debugWalls = false;
+    public bool debugNavMesh = false;
 
     [Header("Player")]
     public GameObject playerPrefab;
@@ -39,6 +42,12 @@ public class VesselGenerator : MonoBehaviour
         // Fit camera so the full tube width is visible — startRadius * 1.5 shows walls + breathing room
         if (Camera.main != null)
             Camera.main.orthographicSize = startRadius * 1.5f;
+    }
+
+    void Start()
+    {
+        // Deferred to Start so PolygonCollider2D shapes are fully registered with physics before baking
+        BakeNavMesh();
     }
 
     // ── Network generation ────────────────────────────────────────
@@ -246,6 +255,19 @@ public class VesselGenerator : MonoBehaviour
             AddWall(go, a + perp * e.from.radius, endPlus);
             AddWall(go, a - perp * e.from.radius, endMinus);
         }
+
+        // Walkable area for NavMesh — trapezoid spanning the corridor interior
+        var walkable = new GameObject("Walkable");
+        walkable.transform.SetParent(go.transform);
+        var poly = walkable.AddComponent<PolygonCollider2D>();
+        poly.isTrigger = true;
+        poly.SetPath(0, new Vector2[]
+        {
+            a + perp * e.from.radius,
+            b + perp * e.to.radius,
+            b - perp * e.to.radius,
+            a - perp * e.from.radius,
+        });
     }
 
     void AddWall(GameObject parent, Vector2 p0, Vector2 p1)
@@ -254,6 +276,8 @@ public class VesselGenerator : MonoBehaviour
         wgo.transform.SetParent(parent.transform);
         var ec = wgo.AddComponent<EdgeCollider2D>();
         ec.SetPoints(new List<Vector2> { p0, p1 });
+        var mod = wgo.AddComponent<NavMeshModifier>();
+        mod.ignoreFromBuild = true;
 
         if (!debugWalls) return;
         var lr = wgo.AddComponent<LineRenderer>();
@@ -284,6 +308,40 @@ public class VesselGenerator : MonoBehaviour
             var ec = go.AddComponent<EdgeCollider2D>();
             ec.SetPoints(new List<Vector2> { left, right });
         }
+    }
+
+    // ── NavMesh ───────────────────────────────────────────────────
+
+    void BakeNavMesh()
+    {
+        var surfaceGO = new GameObject("NavSurface");
+        surfaceGO.transform.rotation = Quaternion.Euler(-90f, 0f, 0f);
+
+        var surface = surfaceGO.AddComponent<NavMeshSurface>();
+        surface.collectObjects = CollectObjects.All;
+        surface.useGeometry    = UnityEngine.AI.NavMeshCollectGeometry.PhysicsColliders;
+
+        surfaceGO.AddComponent<CollectSources2d>();
+        surface.BuildNavMesh();
+
+        if (debugNavMesh)
+            DrawNavMeshDebug();
+    }
+
+    void DrawNavMeshDebug()
+    {
+        var tri = UnityEngine.AI.NavMesh.CalculateTriangulation();
+        Debug.Log($"[NavMesh] triangulation: {tri.vertices.Length} vertices, {tri.indices.Length / 3} triangles");
+        if (tri.vertices.Length == 0) return;
+
+        var go = new GameObject("NavMeshDebug");
+        var mesh = new Mesh { vertices = tri.vertices, triangles = tri.indices };
+        mesh.RecalculateNormals();
+
+        go.AddComponent<MeshFilter>().mesh = mesh;
+        var mr = go.AddComponent<MeshRenderer>();
+        mr.material = new Material(Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default")) { color = new Color(0f, 0.8f, 1f, 1f) };
+        mr.sortingOrder = 5;
     }
 
     // ── Helpers ───────────────────────────────────────────────────
