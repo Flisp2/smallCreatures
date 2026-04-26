@@ -26,6 +26,9 @@ public class VesselGenerator : MonoBehaviour
     public GameObject playerPrefab;
     public bool spawnPlayer = true;
 
+    [Header("Enemies")]
+    public GameObject wbcPrefab;
+
     readonly List<VesselNode> _nodes = new();
     readonly List<VesselEdge> _edges = new();
     Material _lineMat;
@@ -48,6 +51,7 @@ public class VesselGenerator : MonoBehaviour
     {
         // Deferred to Start so PolygonCollider2D shapes are fully registered with physics before baking
         BakeNavMesh();
+        SpawnWBCs();
     }
 
     // ── Network generation ────────────────────────────────────────
@@ -307,6 +311,21 @@ public class VesselGenerator : MonoBehaviour
             go.transform.SetParent(parent.transform);
             var ec = go.AddComponent<EdgeCollider2D>();
             ec.SetPoints(new List<Vector2> { left, right });
+        }
+    }
+
+    // ── Enemy spawning ────────────────────────────────────────────
+
+    void SpawnWBCs()
+    {
+        if (!wbcPrefab) return;
+        foreach (var e in _edges)
+        {
+            Vector2 mid = (e.from.pos + e.to.pos) * 0.5f;
+            var wbc = Instantiate(wbcPrefab, (Vector3)mid, Quaternion.identity);
+            var wbcCode = wbc.GetComponent<WBCcode>();
+            if (wbcCode)
+                wbcCode.searchAreaRadius = (e.from.radius + e.to.radius) * 0.5f;
         }
     }
 

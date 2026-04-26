@@ -89,7 +89,7 @@ public class WBCcode : MonoBehaviour
             case WBCState.Stunned:   HandleStunned(); break;
         }
 
-        testTarget.position = searchPoint;
+        if (testTarget) testTarget.position = searchPoint;
 
         // Drive the rigidbody from the NavMesh path
         if (currentState != WBCState.Attacking && currentState != WBCState.Stunned)
