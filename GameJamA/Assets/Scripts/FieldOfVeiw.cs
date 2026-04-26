@@ -58,7 +58,7 @@ public class FieldOfView : MonoBehaviour
             RaycastHit2D hit = default;
             foreach (RaycastHit2D h in Physics2D.RaycastAll(origin2D, rayDir, viewDistance))
             {
-                if (!h.collider.transform.IsChildOf(transform.parent))
+                if (!h.collider.transform.IsChildOf(transform.parent) && !h.collider.CompareTag("floor"))
                 {
                     hit = h;
                     break;

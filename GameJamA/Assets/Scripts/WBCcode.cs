@@ -103,7 +103,7 @@ public class WBCcode : MonoBehaviour
 
     // ── States ────────────────────────────────────────────────────────────────
 
-    private Vector2 patrolTarget;
+    public Vector2 patrolTarget;
     private bool hasPatrolTarget;
 
     private void HandlePatrol()
@@ -191,9 +191,15 @@ public class WBCcode : MonoBehaviour
             Vector2 candidate = searchPoint + randomDir;
             NavMeshHit hit;
             if (NavMesh.SamplePosition(candidate, out hit, searchAreaRadius, NavMesh.AllAreas))
+            {
+                Debug.Log("Found patrol point near " + candidate);
                 patrolTarget = hit.position;
+            }
             else
+            {
+                Debug.LogWarning("Failed to find valid patrol point near " + candidate);
                 patrolTarget = searchPoint;
+            }
             hasPatrolTarget = true;
         }
         

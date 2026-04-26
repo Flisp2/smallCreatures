@@ -260,10 +260,14 @@ public class VesselGenerator : MonoBehaviour
             AddWall(go, a - perp * e.from.radius, endMinus);
         }
 
-        // Walkable area for NavMesh — trapezoid spanning the corridor interior
+        // nav area for NavMesh — trapezoid spanning the corridor interior
         var walkable = new GameObject("Walkable");
+        walkable.tag = "floor";
         walkable.transform.SetParent(go.transform);
         var poly = walkable.AddComponent<PolygonCollider2D>();
+        var NavWalkArea = walkable.AddComponent<NavMeshModifier>();
+        NavWalkArea.overrideArea = true;
+        NavWalkArea.area = UnityEngine.AI.NavMesh.GetAreaFromName("Walkable");
         poly.isTrigger = true;
         poly.SetPath(0, new Vector2[]
         {
@@ -281,7 +285,8 @@ public class VesselGenerator : MonoBehaviour
         var ec = wgo.AddComponent<EdgeCollider2D>();
         ec.SetPoints(new List<Vector2> { p0, p1 });
         var mod = wgo.AddComponent<NavMeshModifier>();
-        mod.ignoreFromBuild = true;
+        mod.overrideArea = true;
+        mod.area = UnityEngine.AI.NavMesh.GetAreaFromName("Not Walkable");
 
         if (!debugWalls) return;
         var lr = wgo.AddComponent<LineRenderer>();
@@ -324,8 +329,6 @@ public class VesselGenerator : MonoBehaviour
             Vector2 mid = (e.from.pos + e.to.pos) * 0.5f;
             var wbc = Instantiate(wbcPrefab, (Vector3)mid, Quaternion.identity);
             var wbcCode = wbc.GetComponent<WBCcode>();
-            if (wbcCode)
-                wbcCode.searchAreaRadius = (e.from.radius + e.to.radius) * 0.5f;
         }
     }
 
@@ -334,13 +337,14 @@ public class VesselGenerator : MonoBehaviour
     void BakeNavMesh()
     {
         var surfaceGO = new GameObject("NavSurface");
-        surfaceGO.transform.rotation = Quaternion.Euler(-90f, 0f, 0f);
-
         var surface = surfaceGO.AddComponent<NavMeshSurface>();
+        var collectSources2d = surfaceGO.AddComponent<CollectSources2d>();
+
+        surfaceGO.transform.rotation = Quaternion.Euler(-90f, 0f, 0f); // Align NavMesh with XY plane
+
         surface.collectObjects = CollectObjects.All;
         surface.useGeometry    = UnityEngine.AI.NavMeshCollectGeometry.PhysicsColliders;
 
-        surfaceGO.AddComponent<CollectSources2d>();
         surface.BuildNavMesh();
 
         if (debugNavMesh)

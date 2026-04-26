@@ -245,6 +245,7 @@ MonoBehaviour:
   attackTimer: 0
   searchAreaPrefab: {fileID: 3719057292048811324, guid: 490e84534085d084587b1731e5bb179c, type: 3}
   hunting: 0
+  patrolTarget: {x: 0, y: 0}
 --- !u!50 &280794214
 Rigidbody2D:
   serializedVersion: 5
@@ -810,7 +811,7 @@ MonoBehaviour:
   m_OverrideTileSize: 0
   m_TileSize: 256
   m_OverrideVoxelSize: 0
-  m_VoxelSize: 0.16666667
+  m_VoxelSize: 0.083333336
   m_BuildHeightMesh: 0
   m_MinRegionArea: 0
   m_HideEditorLogs: 0
