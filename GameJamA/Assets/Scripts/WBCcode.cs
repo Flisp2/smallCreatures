@@ -11,6 +11,10 @@ public class WBCcode : MonoBehaviour
     [SerializeField] private float mediumSpeed = 4f;
     [SerializeField] private float fastSpeed = 6f;
 
+    [Header("Optimization")]
+    [SerializeField] private float activationRange = 20f;
+    [SerializeField] private float navUpdateInterval = 0.25f;
+
     [Header("Combat")]
     [SerializeField] private float chargeTime = 2f;
     [SerializeField] private float stunDuration = 2f;
@@ -36,8 +40,31 @@ public class WBCcode : MonoBehaviour
     private float searchTimer;
     public GameObject searchAreaPrefab;
     public bool hunting;
+
+    // Shared across all instances — FindWithTag only runs once total
+    private static Transform _playerTransform;
+
+    // Cached per-instance constants
+    private float _sqrActivationRange;
+    private float _navUpdateTimer;
+
+    private void Awake()
+    {
+        startPosition = transform.position;
+        Instantiate(searchAreaPrefab, startPosition, Quaternion.identity);
+        searchPoint = startPosition;
+        currentState = WBCState.Patrolling;
+    }
+
     private void Start()
     {
+        if (_playerTransform == null)
+        {
+            GameObject playerObj = GameObject.FindWithTag("Player");
+            if (playerObj != null) _playerTransform = playerObj.transform;
+        }
+        _sqrActivationRange = activationRange * activationRange;
+
         agent = GetComponent<NavMeshAgent>();
         agent.updatePosition = false;
         agent.updateRotation = false;
@@ -49,26 +76,37 @@ public class WBCcode : MonoBehaviour
         currentState = WBCState.Patrolling;
     }
 
-    private void Awake()
-    {
-        startPosition = transform.position;
-        Instantiate(searchAreaPrefab, startPosition, Quaternion.identity);
-        searchPoint = startPosition;
-        currentState = WBCState.Patrolling;
-    }
-
     private void Update()
     {
-        agent.nextPosition = transform.position;
-        if (isStunned) 
+        // Cache per-frame values used multiple times
+        float dt = Time.deltaTime;
+        Vector2 myPos = transform.position;
+
+        if (_playerTransform != null)
+        {
+            Vector2 toPlayer = (Vector2)_playerTransform.position - myPos;
+            if (toPlayer.sqrMagnitude > _sqrActivationRange)
+            {
+                rb.linearVelocity = Vector2.zero;
+                ani.enabled = false;
+                return;
+            }
+            ani.enabled = true;
+        }
+
+        _navUpdateTimer -= dt;
+        agent.nextPosition = myPos;
+
+        if (isStunned)
         {
             currentState = WBCState.Stunned;
-            HandleStunned();
+            HandleStunned(dt);
             return;
         }
+
         if (seesTarget)
         {
-            attackTimer -= Time.deltaTime;
+            attackTimer -= dt;
             currentState = WBCState.Attacking;
         }
         else
@@ -78,27 +116,31 @@ public class WBCcode : MonoBehaviour
                 currentState = WBCState.Chasing;
             else if (target == Vector2.zero && hunting)
                 currentState = WBCState.Searching;
-            else currentState = WBCState.Patrolling;
+            else
+                currentState = WBCState.Patrolling;
         }
+
         switch (currentState)
         {
-            case WBCState.Patrolling: HandlePatrol();  break;
-            case WBCState.Chasing:   HandleChase();   break;
-            case WBCState.Searching: HandleSearch();  break;
-            case WBCState.Attacking: HandleAttack();  break;
-            case WBCState.Stunned:   HandleStunned(); break;
+            case WBCState.Patrolling: HandlePatrol(myPos);       break;
+            case WBCState.Chasing:   HandleChase(myPos);        break;
+            case WBCState.Searching: HandleSearch(myPos, dt);   break;
+            case WBCState.Attacking: HandleAttack(dt);          break;
+            case WBCState.Stunned:   HandleStunned(dt);         break;
         }
 
         if (testTarget) testTarget.position = searchPoint;
 
-        // Drive the rigidbody from the NavMesh path
-        if (currentState != WBCState.Attacking && currentState != WBCState.Stunned)
-            rb.linearVelocity = agent.desiredVelocity;
-        if (agent.desiredVelocity.sqrMagnitude > 0.01f)
-            LookAt2D((Vector2)transform.position + (Vector2)agent.desiredVelocity);
+        bool isActive = currentState != WBCState.Attacking && currentState != WBCState.Stunned;
+        Vector3 desiredVel = agent.desiredVelocity;
+
+        if (isActive)
+            rb.linearVelocity = desiredVel;
+
+        if (isActive && desiredVel.sqrMagnitude > 0.01f)
+            LookAt2D(myPos + (Vector2)desiredVel);
         else if (target != Vector2.zero)
             LookAt2D(target);
-
     }
 
     // ── States ────────────────────────────────────────────────────────────────
@@ -106,18 +148,24 @@ public class WBCcode : MonoBehaviour
     public Vector2 patrolTarget;
     private bool hasPatrolTarget;
 
-    private void HandlePatrol()
+    private void HandlePatrol(Vector2 myPos)
     {
         agent.speed = slowSpeed;
-        searchPoint = startPosition;  
-        patrol();
+        searchPoint = startPosition;
+        Patrol(myPos);
     }
-    private void HandleChase()
+
+    private void HandleChase(Vector2 myPos)
     {
         agent.speed = fastSpeed;
-        agent.SetDestination(target);
+        if (_navUpdateTimer <= 0f)
+        {
+            agent.SetDestination(target);
+            _navUpdateTimer = navUpdateInterval;
+        }
         searchPoint = target;
-        if (Vector2.Distance(transform.position, target) <= 0.5f)
+        // 0.5f^2 = 0.25f — avoids sqrt
+        if ((myPos - target).sqrMagnitude <= 0.25f)
         {
             target = Vector2.zero;
             hunting = true;
@@ -125,10 +173,11 @@ public class WBCcode : MonoBehaviour
             currentState = WBCState.Searching;
         }
     }
-    private void HandleSearch()
+
+    private void HandleSearch(Vector2 myPos, float dt)
     {
         agent.speed = mediumSpeed;
-        searchTimer -= Time.deltaTime;
+        searchTimer -= dt;
         if (searchTimer <= 0f)
         {
             hunting = false;
@@ -136,24 +185,28 @@ public class WBCcode : MonoBehaviour
             currentState = WBCState.Patrolling;
             return;
         }
-        patrol();
+        Patrol(myPos);
     }
-    private void HandleAttack()
+
+    private void HandleAttack(float dt)
     {
         hunting = false;
         rb.linearVelocity = Vector2.zero;
-        attackTimer -= Time.deltaTime;
+        attackTimer -= dt;
         LookAt2D(target);
         if (attackTimer <= 0f)
         {
             Stun();
-            PerformAttack();  
+            PerformAttack();
         }
     }
-    public void HandleStunned()
+
+    public void HandleStunned() => HandleStunned(Time.deltaTime);
+
+    private void HandleStunned(float dt)
     {
         attackTimer = chargeTime;
-        stunTimer -= Time.deltaTime;
+        stunTimer -= dt;
         FOV.SetActive(false);
         ani.SetBool("isStunned", true);
         agent.speed = 0f;
@@ -183,7 +236,7 @@ public class WBCcode : MonoBehaviour
         target = newTarget;
     }
 
-    private void patrol()
+    private void Patrol(Vector2 myPos)
     {
         if (!hasPatrolTarget)
         {
@@ -191,10 +244,7 @@ public class WBCcode : MonoBehaviour
             Vector2 candidate = searchPoint + randomDir;
             NavMeshHit hit;
             if (NavMesh.SamplePosition(candidate, out hit, searchAreaRadius, NavMesh.AllAreas))
-            {
-                Debug.Log("Found patrol point near " + candidate);
                 patrolTarget = hit.position;
-            }
             else
             {
                 Debug.LogWarning("Failed to find valid patrol point near " + candidate);
@@ -202,12 +252,16 @@ public class WBCcode : MonoBehaviour
             }
             hasPatrolTarget = true;
         }
-        
-        agent.SetDestination(patrolTarget);
-        if (Vector2.Distance(transform.position, patrolTarget) <= 0.5f)
+
+        if (_navUpdateTimer <= 0f)
         {
-            hasPatrolTarget = false;
+            agent.SetDestination(patrolTarget);
+            _navUpdateTimer = navUpdateInterval;
         }
+
+        // 0.5f^2 = 0.25f — avoids sqrt
+        if ((myPos - patrolTarget).sqrMagnitude <= 0.25f)
+            hasPatrolTarget = false;
     }
 
     public void Stun()
@@ -221,17 +275,16 @@ public class WBCcode : MonoBehaviour
     {
         if (currentState == WBCState.Stunned)
         {
-            if (collision.gameObject.CompareTag("Player") )
+            if (collision.gameObject.CompareTag("Player"))
             {
                 PlayerCode player = collision.gameObject.GetComponent<PlayerCode>();
                 if (player != null)
-                {
                     player.TakeDamage(attackDamage);
-                }
             }
-            rb.linearVelocity = -rb.linearVelocity * 0.1f; // Bounce back with reduced speed
+            rb.linearVelocity = -rb.linearVelocity * 0.1f;
         }
     }
+
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     private void LookAt2D(Vector2 goal)
@@ -241,7 +294,6 @@ public class WBCcode : MonoBehaviour
         float angle = Mathf.LerpAngle(transform.eulerAngles.z, targetAngle, rotationSpeed * Time.deltaTime);
         transform.rotation = Quaternion.Euler(0, 0, angle);
     }
-
 }
 
 

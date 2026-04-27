@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Boost
   abilityName: Boost
   cooldownTime: 5
-  timer: -0.00005883549
+  timer: -0.0010201022
   level: 3
-  icon: {fileID: 0}
+  icon: {fileID: -6157306435291458315, guid: 41ffed7b782577f499b22320e223bafe, type: 3}
   boostAmount: 10
