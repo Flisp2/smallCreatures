@@ -9,12 +9,14 @@ public class VesselGenerator : MonoBehaviour
     public int seed = 42;
     public int maxDepth = 5;
     public float startRadius = 36f;
-    public float radiusDecay = 0.70f;
+    public float radiusDecay = 0.90f;
     public float minSegmentLength = 30f;
     public float maxSegmentLength = 40f;
     public float branchAngle = 35f;
     public float branchAngleVariance = 15f;
     [Range(0f, 1f)] public float straightChance = 0.15f;
+    public int terminateStartDepth = 3;
+    [Range(0f, 1f)] public float terminateBaseChance = 0.2f;
 
     [Header("Appearance")]
     public Color arteryColor = new Color(0.85f, 0.12f, 0.12f);
@@ -31,6 +33,7 @@ public class VesselGenerator : MonoBehaviour
 
     readonly List<VesselNode> _nodes = new();
     readonly List<VesselEdge> _edges = new();
+    readonly List<VesselNode> _terminals = new();
     Material _lineMat;
 
     void Awake()
@@ -38,7 +41,9 @@ public class VesselGenerator : MonoBehaviour
         _lineMat   = MakeLineMaterial();
         Random.InitState(seed);
         BuildNetwork();
+        FindTerminals();
         BuildGeometry();
+        AssignSpecialRooms();
         if (spawnPlayer && playerPrefab != null)
             Instantiate(playerPrefab, (Vector3)_nodes[0].pos, Quaternion.identity);
 
@@ -56,6 +61,57 @@ public class VesselGenerator : MonoBehaviour
 
     // ── Network generation ────────────────────────────────────────
 
+    void FindTerminals()
+    {
+        var hasOutgoing = new HashSet<VesselNode>();
+        foreach (var e in _edges) hasOutgoing.Add(e.from);
+        foreach (var n in _nodes)
+            if (!hasOutgoing.Contains(n)) _terminals.Add(n);
+    }
+
+    void AssignSpecialRooms()
+    {
+        if (_terminals.Count < 4)
+        {
+            Debug.LogWarning($"[VesselGenerator] Only {_terminals.Count} terminal vessels — need 4 for special rooms.");
+            return;
+        }
+
+        var pool = new List<VesselNode>(_terminals);
+        for (int i = pool.Count - 1; i > 0; i--)
+        {
+            int j = Random.Range(0, i + 1);
+            (pool[i], pool[j]) = (pool[j], pool[i]);
+        }
+
+        PlaceRoomMarker(pool[0], Color.green);        // treasure
+        PlaceRoomMarker(pool[1], Color.black);        // trap
+        PlaceRoomMarker(pool[2], Color.black);        // trap
+        PlaceRoomMarker(pool[3], Color.red);          // boss
+    }
+
+    void PlaceRoomMarker(VesselNode node, Color color)
+    {
+        var go = new GameObject("RoomMarker");
+        var lr = go.AddComponent<LineRenderer>();
+        lr.useWorldSpace = true;
+        lr.material = _lineMat;
+        lr.startColor = lr.endColor = color;
+        lr.startWidth = lr.endWidth = 1.5f;
+        lr.sortingOrder = 5;
+
+        const int segments = 32;
+        float radius = node.radius * 0.5f;
+        lr.positionCount = segments + 1;
+        for (int i = 0; i <= segments; i++)
+        {
+            float angle = i * 2f * Mathf.PI / segments;
+            lr.SetPosition(i, new Vector3(
+                node.pos.x + Mathf.Cos(angle) * radius,
+                node.pos.y + Mathf.Sin(angle) * radius, 0f));
+        }
+    }
+
     void BuildNetwork()
     {
         var root = new VesselNode(Vector2.zero, startRadius, 0, isArtery: true);
@@ -71,11 +127,29 @@ public class VesselGenerator : MonoBehaviour
         float r     = parent.radius * radiusDecay;
         bool artery = parent.isArtery && depth > Mathf.Max(1, maxDepth - 2);
 
-        var child = new VesselNode(parent.pos + dir * len, r, parent.depth + 1, artery);
+        Vector2 childPos = parent.pos + dir * len;
+
+        // Reject branch if its tube would intersect any non-adjacent existing segment
+        float newAvgR = (parent.radius + r) * 0.5f;
+        foreach (var existing in _edges)
+        {
+            if (existing.to == parent || existing.from == parent) continue;
+            float minDist = SegmentDist(parent.pos, childPos, existing.from.pos, existing.to.pos);
+            float minAllowed = newAvgR + (existing.from.radius + existing.to.radius) * 0.5f;
+            if (minDist < minAllowed) return;
+        }
+
+        var child = new VesselNode(childPos, r, parent.depth + 1, artery);
         _nodes.Add(child);
         _edges.Add(new VesselEdge(parent, child, side));
 
         if (depth == 1) return;
+
+        if (child.depth >= terminateStartDepth)
+        {
+            float t = Mathf.InverseLerp(terminateStartDepth, maxDepth, child.depth);
+            if (Random.value < Mathf.Lerp(terminateBaseChance, 1f, t)) return;
+        }
 
         if (Random.value < straightChance)
         {
@@ -97,6 +171,29 @@ public class VesselGenerator : MonoBehaviour
         float rad = deg * Mathf.Deg2Rad;
         float c = Mathf.Cos(rad), s = Mathf.Sin(rad);
         return new Vector2(c * v.x - s * v.y, s * v.x + c * v.y);
+    }
+
+    static float SegmentDist(Vector2 p0, Vector2 p1, Vector2 q0, Vector2 q1)
+    {
+        Vector2 d1 = p1 - p0, d2 = q1 - q0, r = p0 - q0;
+        float a = Vector2.Dot(d1, d1), e = Vector2.Dot(d2, d2), f = Vector2.Dot(d2, r);
+        float s, t;
+        if (a <= 1e-6f && e <= 1e-6f) return r.magnitude;
+        if (a <= 1e-6f) { s = 0f; t = Mathf.Clamp01(f / e); }
+        else
+        {
+            float c = Vector2.Dot(d1, r);
+            if (e <= 1e-6f) { t = 0f; s = Mathf.Clamp01(-c / a); }
+            else
+            {
+                float b = Vector2.Dot(d1, d2), denom = a * e - b * b;
+                s = denom != 0f ? Mathf.Clamp01((b * f - c * e) / denom) : 0f;
+                t = (b * s + f) / e;
+                if      (t < 0f) { t = 0f; s = Mathf.Clamp01(-c / a); }
+                else if (t > 1f) { t = 1f; s = Mathf.Clamp01((b - c) / a); }
+            }
+        }
+        return Vector2.Distance(p0 + s * d1, q0 + t * d2);
     }
 
     // ── Scene geometry ────────────────────────────────────────────

@@ -226,7 +226,7 @@ Camera:
   far clip plane: 1000
   field of view: 34
   orthographic: 1
-  orthographic size: 5
+  orthographic size: 3
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -280,6 +280,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 6540673369625617261, guid: f83c708e3710ba246b8caaf8523e26ec, type: 3}
+      propertyPath: ability1
+      value: 
+      objectReference: {fileID: 11400000, guid: 38e91cdf6f4129e47a78151de5633015, type: 2}
     - target: {fileID: 1951323033874324252, guid: 4e4da2b37aa9b854586749adf2df7712, type: 3}
       propertyPath: ability2
       value: 
@@ -340,10 +344,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 6540673369625617261, guid: f83c708e3710ba246b8caaf8523e26ec, type: 3}
-      propertyPath: ability1
-      value: 
-      objectReference: {fileID: 11400000, guid: 38e91cdf6f4129e47a78151de5633015, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -379,16 +379,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::VesselGenerator
   seed: 42
-  maxDepth: 6
-  startRadius: 4
-  radiusDecay: 0.7
+  maxDepth: 10
+  startRadius: 8
+  radiusDecay: 0.8
   minSegmentLength: 10
-  maxSegmentLength: 20
-  branchAngle: 50
-  branchAngleVariance: 20
-  straightChance: 0.15
-  arteryColor: {r: 0.85, g: 0.12, b: 0.12, a: 1}
-  veinColor: {r: 0.12, g: 0.22, b: 0.8, a: 1}
+  maxSegmentLength: 50
+  branchAngle: 30
+  branchAngleVariance: 25
+  straightChance: 0.215
+  terminateStartDepth: 4
+  terminateBaseChance: 0.053
+  arteryColor: {r: 1, g: 0.9333334, b: 0.5490196, a: 1}
+  veinColor: {r: 0.9803922, g: 0.9803922, b: 0.8235295, a: 1}
   debugWalls: 0
   debugNavMesh: 0
   playerPrefab: {fileID: 1895250868}
