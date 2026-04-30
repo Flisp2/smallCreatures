@@ -21,8 +21,6 @@ public class WBCcode : MonoBehaviour
     [SerializeField] private float rotationSpeed = 5f;
     [SerializeField] private int attackDamage = 5;
 
-    public Transform testTarget;
-
     public Vector2 target;
     public bool seesTarget;
     public Vector2 searchPoint;
@@ -38,7 +36,6 @@ public class WBCcode : MonoBehaviour
     public float attackTimer;
     private float stunTimer;
     private float searchTimer;
-    public GameObject searchAreaPrefab;
     public bool hunting;
 
     // Shared across all instances — FindWithTag only runs once total
@@ -51,7 +48,6 @@ public class WBCcode : MonoBehaviour
     private void Awake()
     {
         startPosition = transform.position;
-        Instantiate(searchAreaPrefab, startPosition, Quaternion.identity);
         searchPoint = startPosition;
         currentState = WBCState.Patrolling;
     }
@@ -128,8 +124,6 @@ public class WBCcode : MonoBehaviour
             case WBCState.Attacking: HandleAttack(dt);          break;
             case WBCState.Stunned:   HandleStunned(dt);         break;
         }
-
-        if (testTarget) testTarget.position = searchPoint;
 
         bool isActive = currentState != WBCState.Attacking && currentState != WBCState.Stunned;
         Vector3 desiredVel = agent.desiredVelocity;

@@ -48,7 +48,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: '::'
   fov: 70
   rayCount: 150
-  viewDistance: 4
+  viewDistance: 6
 --- !u!33 &4169497744384716034
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -138,7 +138,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 2.21, y: 0.35, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 1.2, y: 1.2, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1949429459714939114}
@@ -219,18 +219,18 @@ MonoBehaviour:
   slowSpeed: 2
   mediumSpeed: 4
   fastSpeed: 6
+  activationRange: 20
+  navUpdateInterval: 0.25
   chargeTime: 2
   stunDuration: 2
   rotationSpeed: 10
   attackDamage: 5
-  testTarget: {fileID: 8132305815173854311, guid: 490e84534085d084587b1731e5bb179c, type: 3}
   target: {x: 0, y: 0}
-  seesTarget: 0
+  seesTarget: 1
   searchPoint: {x: 0, y: 0}
   searchAreaRadius: 5
   isStunned: 0
   attackTimer: 0
-  searchAreaPrefab: {fileID: 3719057292048811324, guid: 490e84534085d084587b1731e5bb179c, type: 3}
   hunting: 0
   patrolTarget: {x: 0, y: 0}
 --- !u!50 &6196241805554201751

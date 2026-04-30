@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using NavMeshPlus.Components;
 using NavMeshPlus.Extensions;
+using UnityEngine.InputSystem;
 
 public class VesselGenerator : MonoBehaviour
 {
@@ -44,8 +45,7 @@ public class VesselGenerator : MonoBehaviour
         FindTerminals();
         BuildGeometry();
         AssignSpecialRooms();
-        if (spawnPlayer && playerPrefab != null)
-            Instantiate(playerPrefab, (Vector3)_nodes[0].pos, Quaternion.identity);
+        SpawnPlayer();
 
         // Fit camera so the full tube width is visible — startRadius * 1.5 shows walls + breathing room
         if (Camera.main != null)
@@ -57,6 +57,11 @@ public class VesselGenerator : MonoBehaviour
         // Deferred to Start so PolygonCollider2D shapes are fully registered with physics before baking
         BakeNavMesh();
         SpawnWBCs();
+    }
+    void Update()
+    {
+        if (Keyboard.current.rKey.wasPressedThisFrame)
+            GenerateNew();
     }
 
     // ── Network generation ────────────────────────────────────────
@@ -396,6 +401,43 @@ public class VesselGenerator : MonoBehaviour
         lr.startColor = lr.endColor = Color.yellow;
         lr.sortingOrder = 10;
     }
+    public void GenerateNew()
+    {
+        // Delete all existing objects
+        _nodes.Clear();
+        _edges.Clear();
+        _terminals.Clear();
+
+        var existingNetwork = GameObject.Find("VesselNetwork");
+        if (existingNetwork != null)
+            Destroy(existingNetwork);
+
+        var existingNavSurface = GameObject.Find("NavSurface");
+        if (existingNavSurface != null)
+            Destroy(existingNavSurface);
+
+        var existingNavMeshDebug = GameObject.Find("NavMeshDebug");
+        if (existingNavMeshDebug != null)
+            Destroy(existingNavMeshDebug);
+
+        var existingPlayer = GameObject.FindWithTag("Player");
+        if (existingPlayer != null)            
+            Destroy(existingPlayer);
+
+        var existingEnemies = GameObject.FindGameObjectsWithTag("Enemy");
+        foreach (var enemy in existingEnemies)
+            Destroy(enemy);
+
+        // Regenerate the tree
+        Random.InitState(seed);
+        BuildNetwork();
+        FindTerminals();
+        BuildGeometry();
+        AssignSpecialRooms();
+        BakeNavMesh();
+        SpawnPlayer();
+        SpawnWBCs();
+    }
 
 
     // Seal the open end of a leaf segment so the player can't escape
@@ -416,7 +458,7 @@ public class VesselGenerator : MonoBehaviour
         }
     }
 
-    // ── Enemy spawning ────────────────────────────────────────────
+    // ── spawning ────────────────────────────────────────────
 
     void SpawnWBCs()
     {
@@ -424,9 +466,19 @@ public class VesselGenerator : MonoBehaviour
         foreach (var e in _edges)
         {
             Vector2 mid = (e.from.pos + e.to.pos) * 0.5f;
-            var wbc = Instantiate(wbcPrefab, (Vector3)mid, Quaternion.identity);
-            var wbcCode = wbc.GetComponent<WBCcode>();
+            int count = Random.Range(0, 6);
+            for (int i = 0; i < count; i++)
+            {
+                Vector2 offset = Random.insideUnitCircle * 0.3f;
+                var wbc = Instantiate(wbcPrefab, (Vector3)(mid + offset), Quaternion.identity);
+                var wbcCode = wbc.GetComponent<WBCcode>();
+            }
         }
+    }
+    void SpawnPlayer()
+    {
+        if (spawnPlayer && playerPrefab != null)
+            Instantiate(playerPrefab, (Vector3)_nodes[0].pos + Vector3.up * 0.5f, Quaternion.identity);
     }
 
     // ── NavMesh ───────────────────────────────────────────────────

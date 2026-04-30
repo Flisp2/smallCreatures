@@ -9,7 +9,12 @@ public class CameraFollow : MonoBehaviour
 
     void LateUpdate()
     {
-        if (target == null) return;
+        if (target == null) 
+        {
+            GameObject player = GameObject.FindWithTag("Player");
+            if (player != null)
+                target = player.transform;
+        }
         Vector3 goal = new Vector3(target.position.x, target.position.y, transform.position.z);
         transform.position = Vector3.SmoothDamp(transform.position, goal, ref _vel, smoothTime);
     }
