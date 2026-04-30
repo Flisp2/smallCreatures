@@ -12,9 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c7d2f54572f84114cb23042eaab43ec1, type: 3}
   m_Name: New Spikes
   m_EditorClassIdentifier: Assembly-CSharp::Spikes
-  abilityName: Spike
-  cooldownTime: 0
-  timer: 0
-  level: 0
-  icon: {fileID: -855298285791758126, guid: d8dba004dbea54744ae72b60b63187b2, type: 3}
-  spikeDamage: 10
+  abilityName: Spikes
+  cooldownTime: 20
+  timer: 9.516393
+  level: 1
+  icon: {fileID: 109871695347660471, guid: c4beb6a884a82234c9070d38bcdc0a27, type: 3}
+  spikeSprite: {fileID: -3699097630987226962, guid: d34b11c36c603fd439d19d139146fc69, type: 3}
+  spikeDur: 3

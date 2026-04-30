@@ -130,11 +130,11 @@ PrefabInstance:
     - target: {fileID: 1951323033874324252, guid: 4e4da2b37aa9b854586749adf2df7712, type: 3}
       propertyPath: ability1
       value: 
-      objectReference: {fileID: 11400000, guid: 38e91cdf6f4129e47a78151de5633015, type: 2}
+      objectReference: {fileID: 0}
     - target: {fileID: 1951323033874324252, guid: 4e4da2b37aa9b854586749adf2df7712, type: 3}
       propertyPath: ability2
       value: 
-      objectReference: {fileID: 11400000, guid: 7ccc328ba95e4584a858ed78ff4b0ee4, type: 2}
+      objectReference: {fileID: 0}
     - target: {fileID: 2173277961497593036, guid: 4e4da2b37aa9b854586749adf2df7712, type: 3}
       propertyPath: m_Name
       value: MainCharacter 1
@@ -196,7 +196,7 @@ GameObject:
   - component: {fileID: 101092472}
   - component: {fileID: 101092471}
   m_Layer: 5
-  m_Name: Image (3)
+  m_Name: Cooldown1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -491,7 +491,7 @@ GameObject:
   - component: {fileID: 503845512}
   - component: {fileID: 503845511}
   m_Layer: 5
-  m_Name: Image (3)
+  m_Name: Cooldown2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -540,7 +540,7 @@ MonoBehaviour:
   m_Type: 3
   m_PreserveAspect: 0
   m_FillCenter: 1
-  m_FillMethod: 4
+  m_FillMethod: 1
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
@@ -882,10 +882,10 @@ MonoBehaviour:
       - m_Target: {fileID: 215323374}
         m_TargetAssemblyTypeName: CellCode, Assembly-CSharp
         m_MethodName: HideUI
-        m_Mode: 1
+        m_Mode: 2
         m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_ObjectArgument: {fileID: 1582210008}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.GameObject, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
           m_StringArgument: 
@@ -1078,6 +1078,7 @@ GameObject:
   - component: {fileID: 993486148}
   - component: {fileID: 993486147}
   - component: {fileID: 993486146}
+  - component: {fileID: 993486149}
   m_Layer: 5
   m_Name: AbilityHolder
   m_TagString: Untagged
@@ -1127,8 +1128,8 @@ MonoBehaviour:
   m_Spacing: 10
   m_ChildForceExpandWidth: 1
   m_ChildForceExpandHeight: 1
-  m_ChildControlWidth: 1
-  m_ChildControlHeight: 1
+  m_ChildControlWidth: 0
+  m_ChildControlHeight: 0
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0
@@ -1170,6 +1171,18 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 993486144}
   m_CullTransparentMesh: 1
+--- !u!114 &993486149
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 993486144}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b43544b52ef6e904aa282d14a12f6c34, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: '::'
 --- !u!1 &1005068771
 GameObject:
   m_ObjectHideFlags: 0
@@ -1606,7 +1619,7 @@ GameObject:
   - component: {fileID: 1710612292}
   - component: {fileID: 1710612291}
   m_Layer: 5
-  m_Name: Image (1)
+  m_Name: Image1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1630,7 +1643,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: 144.725, y: 113.45}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1710612291
 MonoBehaviour:
@@ -1844,10 +1857,10 @@ MonoBehaviour:
       - m_Target: {fileID: 215323374}
         m_TargetAssemblyTypeName: CellCode, Assembly-CSharp
         m_MethodName: HideUI
-        m_Mode: 1
+        m_Mode: 2
         m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_ObjectArgument: {fileID: 450851962}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.GameObject, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
           m_StringArgument: 
@@ -2116,7 +2129,7 @@ GameObject:
   - component: {fileID: 2056631069}
   - component: {fileID: 2056631068}
   m_Layer: 5
-  m_Name: Image (2)
+  m_Name: Image2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2140,7 +2153,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: 144.725, y: 113.45}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2056631068
 MonoBehaviour:

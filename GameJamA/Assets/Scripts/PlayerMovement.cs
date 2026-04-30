@@ -4,7 +4,7 @@ using UnityEngine.InputSystem;
 public class PlayerCode : MonoBehaviour
 {
     public Vector2 direction;
-    [SerializeField] private float cooldown = 0f;
+    public float cooldown = 0f;
     private Rigidbody2D rb;
 
     //Player Stats//
@@ -122,6 +122,18 @@ public class PlayerCode : MonoBehaviour
             collider.radius = newSize.x;
 
         }
+    }
+    public float GetCooldown(Ability ability)
+    {
+        if (ability == ability1)
+        {
+            return ability1.timer;
+        }
+        else if (ability == ability2)
+        {
+            return ability2.timer;
+        }
+        return 0f;
     }
 
     private void Die()

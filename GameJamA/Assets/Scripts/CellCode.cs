@@ -36,15 +36,36 @@ public class CellCode : MonoBehaviour
                 pickedAbilities.Clear();
                 RandomAbility(playerCode);
                 RandomAbility(playerCode);
-                GameObject.Find("Choice1").GetComponent<AbilityHolder>().Ability = pickedAbilities[0];
-                GameObject.Find("Choice2").GetComponent<AbilityHolder>().Ability = pickedAbilities[1];
+                Time.timeScale = 0f;
+                ChoiceHolder choice1 = GameObject.Find("Choice1").GetComponent<ChoiceHolder>();
+                ChoiceHolder choice2 = GameObject.Find("Choice2").GetComponent<ChoiceHolder>();
+                choice1.Ability = pickedAbilities[0];
+                choice2.Ability = pickedAbilities[1];
+                choice1.enabled = true;
+                choice2.enabled = true;
+
             }
         }
     }
-    public void HideUI()
+    public void HideUI(GameObject chosenAbilityObject)
     {
+        Time.timeScale = 1f;
+        Ability chosenAbility = chosenAbilityObject.GetComponent<ChoiceHolder>().Ability;
+        PlayerCode playerCode = GameObject.FindWithTag("Player").GetComponent<PlayerCode>();
+        if (playerCode.ability1 == null && playerCode.ability2 == null)
+        {
+            playerCode.ability1 = chosenAbility;
+        } 
+        else if (playerCode.ability1 != null && playerCode.ability2 == null)
+        {
+            playerCode.ability2 = chosenAbility;
+        } 
+        else if (playerCode.ability1 != null && playerCode.ability2 != null)
+        {
+            Debug.LogWarning("Player already has 2 abilities. Cannot assign more.");
+        }
         Pause.SetActive(false);
-        Choice.SetActive(false);
+        Choice.SetActive(false);    
     }
     private void RandomAbility(PlayerCode playerCode)
     {
