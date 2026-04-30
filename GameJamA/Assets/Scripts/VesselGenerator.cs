@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using NavMeshPlus.Components;
@@ -31,6 +32,7 @@ public class VesselGenerator : MonoBehaviour
 
     [Header("Enemies")]
     public GameObject wbcPrefab;
+    public int maxWBCs = 2;
 
     readonly List<VesselNode> _nodes = new();
     readonly List<VesselEdge> _edges = new();
@@ -40,12 +42,12 @@ public class VesselGenerator : MonoBehaviour
     void Awake()
     {
         _lineMat   = MakeLineMaterial();
-        Random.InitState(seed);
+        /*Random.InitState(seed);
         BuildNetwork();
         FindTerminals();
         BuildGeometry();
         AssignSpecialRooms();
-        SpawnPlayer();
+        SpawnPlayer();*/
 
         // Fit camera so the full tube width is visible — startRadius * 1.5 shows walls + breathing room
         if (Camera.main != null)
@@ -54,9 +56,6 @@ public class VesselGenerator : MonoBehaviour
 
     void Start()
     {
-        // Deferred to Start so PolygonCollider2D shapes are fully registered with physics before baking
-        BakeNavMesh();
-        SpawnWBCs();
     }
     void Update()
     {
@@ -78,7 +77,9 @@ public class VesselGenerator : MonoBehaviour
     {
         if (_terminals.Count < 4)
         {
-            Debug.LogWarning($"[VesselGenerator] Only {_terminals.Count} terminal vessels — need 4 for special rooms.");
+            Debug.LogWarning($"[VesselGenerator] Only {_terminals.Count} terminal vessels — need 4 for special rooms. Trying next seed.");
+            seed++;
+            GenerateNew();
             return;
         }
 
@@ -387,8 +388,7 @@ public class VesselGenerator : MonoBehaviour
         var ec = wgo.AddComponent<EdgeCollider2D>();
         ec.SetPoints(new List<Vector2> { p0, p1 });
         var mod = wgo.AddComponent<NavMeshModifier>();
-        mod.overrideArea = true;
-        mod.area = UnityEngine.AI.NavMesh.GetAreaFromName("Not Walkable");
+        mod.ignoreFromBuild = true;
 
         if (!debugWalls) return;
         var lr = wgo.AddComponent<LineRenderer>();
@@ -403,6 +403,7 @@ public class VesselGenerator : MonoBehaviour
     }
     public void GenerateNew()
     {
+        Debug.Log("Generating new vessel network with seed " + seed);
         // Delete all existing objects
         _nodes.Clear();
         _edges.Clear();
@@ -421,7 +422,8 @@ public class VesselGenerator : MonoBehaviour
             Destroy(existingNavMeshDebug);
 
         var existingPlayer = GameObject.FindWithTag("Player");
-        if (existingPlayer != null)            
+        if (existingPlayer != null)
+            Debug.LogWarning("Player object still exists when generating new vessel network. Destroying it to prevent duplicates.");            
             Destroy(existingPlayer);
 
         var existingEnemies = GameObject.FindGameObjectsWithTag("Enemy");
@@ -434,9 +436,7 @@ public class VesselGenerator : MonoBehaviour
         FindTerminals();
         BuildGeometry();
         AssignSpecialRooms();
-        BakeNavMesh();
-        SpawnPlayer();
-        SpawnWBCs();
+        StartCoroutine(BakeNavMeshAsync());
     }
 
 
@@ -466,7 +466,7 @@ public class VesselGenerator : MonoBehaviour
         foreach (var e in _edges)
         {
             Vector2 mid = (e.from.pos + e.to.pos) * 0.5f;
-            int count = Random.Range(0, 6);
+            int count = Random.Range(0, maxWBCs);
             for (int i = 0; i < count; i++)
             {
                 Vector2 offset = Random.insideUnitCircle * 0.3f;
@@ -483,18 +483,23 @@ public class VesselGenerator : MonoBehaviour
 
     // ── NavMesh ───────────────────────────────────────────────────
 
-    void BakeNavMesh()
+    IEnumerator BakeNavMeshAsync()
     {
+        yield return null; // wait one frame so all colliders are fully settled
+
         var surfaceGO = new GameObject("NavSurface");
         var surface = surfaceGO.AddComponent<NavMeshSurface>();
-        var collectSources2d = surfaceGO.AddComponent<CollectSources2d>();
+        surfaceGO.AddComponent<CollectSources2d>();
 
         surfaceGO.transform.rotation = Quaternion.Euler(-90f, 0f, 0f); // Align NavMesh with XY plane
 
         surface.collectObjects = CollectObjects.All;
         surface.useGeometry    = UnityEngine.AI.NavMeshCollectGeometry.PhysicsColliders;
 
-        surface.BuildNavMesh();
+        yield return surface.BuildNavMeshAsync();
+
+        SpawnPlayer();
+        SpawnWBCs();
 
         if (debugNavMesh)
             DrawNavMeshDebug();

@@ -14,6 +14,7 @@ public class CameraFollow : MonoBehaviour
             GameObject player = GameObject.FindWithTag("Player");
             if (player != null)
                 target = player.transform;
+                if (target == null) return; // Still can't find player, skip this frame
         }
         Vector3 goal = new Vector3(target.position.x, target.position.y, transform.position.z);
         transform.position = Vector3.SmoothDamp(transform.position, goal, ref _vel, smoothTime);

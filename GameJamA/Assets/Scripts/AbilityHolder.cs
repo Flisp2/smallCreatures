@@ -15,11 +15,15 @@ public class AbilityHolder : MonoBehaviour
         Image2 = transform.Find("Image2").gameObject;
         Cooldown1 = Image1.transform.Find("Cooldown1").GetComponent<UnityEngine.UI.Image>();
         Cooldown2 = Image2.transform.Find("Cooldown2").GetComponent<UnityEngine.UI.Image>();
-        playerCode = GameObject.FindWithTag("Player").GetComponent<PlayerCode>();
+        playerCode = GameObject.FindWithTag("Player")?.GetComponent<PlayerCode>();
     }
 
     private void FixedUpdate()
     {
+        if (playerCode == null)        {
+            playerCode = GameObject.FindWithTag("Player")?.GetComponent<PlayerCode>();
+            if (playerCode == null) return; // Still can't find player, skip this frame
+        }
         ability1 = playerCode.ability1;
         ability2 = playerCode.ability2;
         if (ability1 != null)

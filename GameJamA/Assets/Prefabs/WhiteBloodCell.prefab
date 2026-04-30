@@ -228,7 +228,7 @@ MonoBehaviour:
   target: {x: 0, y: 0}
   seesTarget: 1
   searchPoint: {x: 0, y: 0}
-  searchAreaRadius: 5
+  searchAreaRadius: 8
   isStunned: 0
   attackTimer: 0
   hunting: 0
