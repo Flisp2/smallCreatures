@@ -19,13 +19,18 @@ public class PlayerCode : MonoBehaviour
     private Mouse ms;
 
     //Player Abilities Slots//
-    public Ability ability1;
-    public Ability ability2;
+    public static Ability ability1;
+    public static Ability ability2;
 
     private void Awake()
     {
         direction = Vector2.zero;
         rb = GetComponent<Rigidbody2D>();
+    }
+    private void Start()
+    {
+        ability1 = null;
+        ability2 = null;
     }
 
     private void Update()

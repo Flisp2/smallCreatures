@@ -423,8 +423,10 @@ public class VesselGenerator : MonoBehaviour
 
         var existingPlayer = GameObject.FindWithTag("Player");
         if (existingPlayer != null)
+        {
             Debug.LogWarning("Player object still exists when generating new vessel network. Destroying it to prevent duplicates.");            
             Destroy(existingPlayer);
+        }
 
         var existingEnemies = GameObject.FindGameObjectsWithTag("Enemy");
         foreach (var enemy in existingEnemies)

@@ -6,12 +6,15 @@ public class CellCode : MonoBehaviour
 {
     public GameObject Pause;
     public GameObject Choice;
+    public GameObject ChooseAbilityUI;
+    //public WorldData worldData;
     private List<Ability> abilities = new List<Ability>();
     private List<Ability> pickedAbilities = new List<Ability>();
     private void Awake()
     {
         Pause.SetActive(false);
         Choice.SetActive(false);
+        ChooseAbilityUI.SetActive(false);
         string path = Application.dataPath + "/Scripts/Abilities/AbilityObjects";
         foreach (string file in System.IO.Directory.GetFiles(path, "*.asset"))
         {
@@ -47,25 +50,49 @@ public class CellCode : MonoBehaviour
             }
         }
     }
-    public void HideUI(GameObject chosenAbilityObject)
+    public void ChooseAbility(GameObject chosenAbilityObject)
     {
-        Time.timeScale = 1f;
         Ability chosenAbility = chosenAbilityObject.GetComponent<ChoiceHolder>().Ability;
         PlayerCode playerCode = GameObject.FindWithTag("Player").GetComponent<PlayerCode>();
-        if (playerCode.ability1 == null && playerCode.ability2 == null)
+
+        if (PlayerCode.ability1 != null && PlayerCode.ability1.name == chosenAbility.name)
         {
-            playerCode.ability1 = chosenAbility;
-        } 
-        else if (playerCode.ability1 != null && playerCode.ability2 == null)
-        {
-            playerCode.ability2 = chosenAbility;
-        } 
-        else if (playerCode.ability1 != null && playerCode.ability2 != null)
-        {
-            Debug.LogWarning("Player already has 2 abilities. Cannot assign more.");
+            PlayerCode.ability1.level++;
+            HideChoiceUI();
+            return;
         }
+        if (PlayerCode.ability2 != null && PlayerCode.ability2.name == chosenAbility.name)
+        {
+            PlayerCode.ability2.level++;
+            HideChoiceUI();
+            return;
+        }
+
+        if (PlayerCode.ability1 == null && PlayerCode.ability2 == null)
+        {
+            PlayerCode.ability1 = chosenAbility;
+            PlayerCode.ability1.level = 1;
+        } 
+        else if (PlayerCode.ability1 != null && PlayerCode.ability2 == null)
+        {
+            PlayerCode.ability2 = chosenAbility;
+            PlayerCode.ability2.level = 1;
+        } 
+        else if (PlayerCode.ability1 != null && PlayerCode.ability2 != null)
+        {
+            ChooseAbilityUI.SetActive(true);
+            ChooseAbilityUI.GetComponent<ChooseAbilityUI>().SetUp(chosenAbility, this);
+            return;
+        }   
+        HideChoiceUI();
+    }
+    public void HideChoiceUI()
+    {
+        Time.timeScale = 1f;
         Pause.SetActive(false);
-        Choice.SetActive(false);    
+        Choice.SetActive(false);
+        //worldData.currentLevel++;
+        //worldData.SetLevelGen();
     }
     private void RandomAbility(PlayerCode playerCode)
     {

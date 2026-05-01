@@ -12,7 +12,7 @@ public class WorldData : MonoBehaviour
         SetLevelGen();
     }
 
-    void SetLevelGen()
+    public void SetLevelGen()
     {
         if (vesselGen == null) return; // Don't overwrite if already set in editor
         vesselGen.seed = System.DateTime.Now.Millisecond + currentLevel * 1000;
