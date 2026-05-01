@@ -16,6 +16,7 @@ public class CellCode : MonoBehaviour
         Choice.SetActive(false);
         ChooseAbilityUI.SetActive(false);
         worldData = FindObjectOfType<WorldData>();
+#if UNITY_EDITOR
         string path = Application.dataPath + "/Scripts/Abilities/AbilityObjects";
         foreach (string file in System.IO.Directory.GetFiles(path, "*.asset"))
         {
@@ -27,6 +28,7 @@ public class CellCode : MonoBehaviour
             }
         }
         Debug.Log($"Loaded {abilities.Count} abilities.");
+#endif
     }
     private void OnTriggerEnter2D(Collider2D collision)
     {

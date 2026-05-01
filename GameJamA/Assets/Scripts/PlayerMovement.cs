@@ -173,7 +173,6 @@ public class PlayerCode : MonoBehaviour
     {
         Debug.Log("Player has died.");
         ani.SetTrigger("Death");
-        GetComponent<Collider2D>().enabled = false;
         StartCoroutine(SlowDownTime());
         this.enabled = false;
     }
