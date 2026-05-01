@@ -6,6 +6,7 @@ public class PlayerCode : MonoBehaviour
     public Vector2 direction;
     public float cooldown = 0f;
     private Rigidbody2D rb;
+    private Animator ani;
 
     //Player Stats//
     public float maxHealth = 10f;
@@ -14,6 +15,9 @@ public class PlayerCode : MonoBehaviour
     public float speed = 5f;
     public float baseSpeed = 5f;
     public bool isHidden = false;
+    public bool isInvulnerable = false;
+    public AudioSource PlayerAudio;
+    public AudioClip moveSound;
 
     private Keyboard kb;
     private Mouse ms;
@@ -26,6 +30,8 @@ public class PlayerCode : MonoBehaviour
     {
         direction = Vector2.zero;
         rb = GetComponent<Rigidbody2D>();
+        PlayerAudio = GetComponent<AudioSource>();
+        ani = GetComponent<Animator>();
     }
     private void Start()
     {
@@ -40,8 +46,13 @@ public class PlayerCode : MonoBehaviour
 
         MovePlayer();
         AbilityCheck();
+        PlayAuido();
         if (cooldown > 0f)        {
             cooldown -= Time.deltaTime;
+        }
+        if (kb.spaceKey.wasPressedThisFrame)
+        {
+            Die();
         }
     }
 
@@ -112,6 +123,7 @@ public class PlayerCode : MonoBehaviour
     }
     public void TakeDamage(float damage)
     {
+        if (isHidden || isInvulnerable) return; 
         currentHealth -= damage;
         if (currentHealth <= 0f)
         {
@@ -127,6 +139,22 @@ public class PlayerCode : MonoBehaviour
             collider.radius = newSize.x;
 
         }
+    }
+    public void PlayAuido()
+    {
+        if (direction.magnitude > 0.1f)
+        {
+            var randomPitch = Random.Range(0.8f, 1.2f);
+            var randomTime = Random.Range(1f, 100f);
+            if (randomTime < 2f)
+            {
+                if (!PlayerAudio.isPlaying)
+                {
+                    PlayerAudio.pitch = randomPitch;
+                    PlayerAudio.PlayOneShot(moveSound);
+                }
+            }
+        }  
     }
     public float GetCooldown(Ability ability)
     {
@@ -144,6 +172,22 @@ public class PlayerCode : MonoBehaviour
     private void Die()
     {
         Debug.Log("Player has died.");
-        // Implement death behavior (e.g., respawn, game over screen)
+        ani.SetTrigger("Death");
+        GetComponent<Collider2D>().enabled = false;
+        StartCoroutine(SlowDownTime());
+        this.enabled = false;
+    }
+
+    private System.Collections.IEnumerator SlowDownTime()
+    {
+        float duration = 3f;
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            Time.timeScale = Mathf.Lerp(1f, 0f, elapsed / duration);
+            yield return null;
+        }
+        Time.timeScale = 0f;
     }
 }

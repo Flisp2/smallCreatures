@@ -7,10 +7,10 @@ public class Ability : ScriptableObject
     public float timer;
     public int level;
     public Sprite icon;
+    public AudioClip soundEffect;
 
     public virtual void Use(GameObject user)
     {
-
     }
     public void UpdateTimer()
     {

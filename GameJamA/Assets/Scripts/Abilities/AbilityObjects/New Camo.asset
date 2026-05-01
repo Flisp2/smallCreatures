@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Camo
   abilityName: Camo
   cooldownTime: 20
-  timer: -0.0011661361
-  level: 3
+  timer: -0.0020614192
+  level: 1
   icon: {fileID: -2707027179712975927, guid: 9392c29c1294185479e6704d4949b0ff, type: 3}
+  soundEffect: {fileID: 8300000, guid: e99f690fd2c5f9342ac7248b7485f635, type: 3}
   camoDuration: 5

@@ -37,6 +37,8 @@ public class WBCcode : MonoBehaviour
     private float stunTimer;
     private float searchTimer;
     public bool hunting;
+    public AudioClip moveSound;
+    public AudioSource EnemyAudio;
 
     // Shared across all instances — FindWithTag only runs once total
     private static Transform _playerTransform;
@@ -59,6 +61,9 @@ public class WBCcode : MonoBehaviour
             GameObject playerObj = GameObject.FindWithTag("Player");
             if (playerObj != null) _playerTransform = playerObj.transform;
         }
+
+        EnemyAudio = GetComponent<AudioSource>();
+
         _sqrActivationRange = activationRange * activationRange;
 
         agent = GetComponent<NavMeshAgent>();
@@ -99,6 +104,8 @@ public class WBCcode : MonoBehaviour
             HandleStunned(dt);
             return;
         }
+
+        PlayAudio();
 
         if (seesTarget)
         {
@@ -263,6 +270,22 @@ public class WBCcode : MonoBehaviour
         isStunned = true;
         stunTimer = stunDuration;
         currentState = WBCState.Stunned;
+    }
+    private void PlayAudio()
+    {
+        if (currentState == WBCState.Patrolling || currentState == WBCState.Chasing || currentState == WBCState.Searching)
+        {
+            var randomPitch = Random.Range(0.8f, 1.2f);
+            var randomTime = Random.Range(1f, 100f);
+            if (randomTime < 2f)
+            {
+                if (!EnemyAudio.isPlaying)
+                {
+                    EnemyAudio.pitch = randomPitch;
+                    EnemyAudio.PlayOneShot(moveSound);
+                }
+            }
+        }  
     }
 
     private void OnCollisionEnter2D(Collision2D collision)

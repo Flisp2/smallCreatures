@@ -7,7 +7,7 @@ public class CellCode : MonoBehaviour
     public GameObject Pause;
     public GameObject Choice;
     public GameObject ChooseAbilityUI;
-    //public WorldData worldData;
+    public WorldData worldData;
     private List<Ability> abilities = new List<Ability>();
     private List<Ability> pickedAbilities = new List<Ability>();
     private void Awake()
@@ -15,6 +15,7 @@ public class CellCode : MonoBehaviour
         Pause.SetActive(false);
         Choice.SetActive(false);
         ChooseAbilityUI.SetActive(false);
+        worldData = FindObjectOfType<WorldData>();
         string path = Application.dataPath + "/Scripts/Abilities/AbilityObjects";
         foreach (string file in System.IO.Directory.GetFiles(path, "*.asset"))
         {
@@ -91,8 +92,12 @@ public class CellCode : MonoBehaviour
         Time.timeScale = 1f;
         Pause.SetActive(false);
         Choice.SetActive(false);
-        //worldData.currentLevel++;
-        //worldData.SetLevelGen();
+        ChooseAbilityUI.SetActive(false);
+        if (worldData != null)
+        {
+            WorldData.currentLevel++;
+            worldData.SetLevelGen();
+        }
     }
     private void RandomAbility(PlayerCode playerCode)
     {

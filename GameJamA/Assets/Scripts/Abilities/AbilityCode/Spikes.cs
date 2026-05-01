@@ -9,8 +9,14 @@ public class Spikes : Ability
     {
         if (timer > 0f) return;
         PlayerCode playerCode = user.GetComponent<PlayerCode>();
+        AudioSource audioSource = user.GetComponent<AudioSource>();
+        if (audioSource != null)
+        {
+            audioSource.PlayOneShot(soundEffect);
+        }
         if (playerCode != null)
         {
+            playerCode.isInvulnerable = true;
             GameObject spike = new GameObject("Spike");
             spike.transform.SetParent(user.transform);
             spike.transform.localPosition = Vector3.zero;
@@ -29,6 +35,7 @@ public class Spikes : Ability
         Transform spikeTransform = playerCode.transform.Find("Spike");
         if (spikeTransform != null)
         {
+            playerCode.isInvulnerable = false;
             GameObject spike = spikeTransform.gameObject;
             Object.Destroy(spike);
         }
