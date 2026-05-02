@@ -37,6 +37,9 @@ public class VesselGenerator : MonoBehaviour
     [Header("Enemies")]
     public GameObject wbcPrefab;
     public int maxWBCs = 2;
+    public float wbcSpawnRange   = 100f;
+    public float wbcDespawnRange = 150f;
+    public float wbcStreamInterval = 0.5f;
 
     [Header("Blood Flow")]
     public float vesselFlowForce = 5f;
@@ -44,6 +47,8 @@ public class VesselGenerator : MonoBehaviour
     readonly List<VesselNode> _nodes = new();
     readonly List<VesselEdge> _edges = new();
     readonly List<VesselNode> _terminals = new();
+    readonly Dictionary<VesselEdge, List<GameObject>> _wbcsByEdge = new();
+    Coroutine _wbcStreamCoroutine;
     Material _lineMat;
 
     void Awake()
@@ -450,7 +455,7 @@ public class VesselGenerator : MonoBehaviour
     public void GenerateNew()
     {
         Debug.Log("Generating new vessel network with seed " + seed);
-        // Delete all existing objects
+        StopWBCStreaming();
         _nodes.Clear();
         _edges.Clear();
         _terminals.Clear();
@@ -556,18 +561,64 @@ public class VesselGenerator : MonoBehaviour
         Instantiate(rbcPrefab, (Vector3)pos, Quaternion.identity);
     }
 
-    void SpawnWBCs()
+    void StartWBCStreaming()
     {
         if (!wbcPrefab) return;
+        _wbcsByEdge.Clear();
         foreach (var e in _edges)
+            _wbcsByEdge[e] = new List<GameObject>();
+        if (_wbcStreamCoroutine != null) StopCoroutine(_wbcStreamCoroutine);
+        _wbcStreamCoroutine = StartCoroutine(StreamWBCs());
+    }
+
+    void StopWBCStreaming()
+    {
+        if (_wbcStreamCoroutine != null) { StopCoroutine(_wbcStreamCoroutine); _wbcStreamCoroutine = null; }
+        foreach (var wbcs in _wbcsByEdge.Values)
         {
-            Vector2 mid = (e.from.pos + e.to.pos) * 0.5f;
-            int count = Random.Range(0, maxWBCs);
-            for (int i = 0; i < count; i++)
+            foreach (var w in wbcs) if (w != null) Destroy(w);
+            wbcs.Clear();
+        }
+        _wbcsByEdge.Clear();
+    }
+
+    IEnumerator StreamWBCs()
+    {
+        var wait = new WaitForSeconds(wbcStreamInterval);
+        while (true)
+        {
+            yield return wait;
+            var playerObj = GameObject.FindWithTag("Player");
+            if (playerObj == null) continue;
+            Vector2 playerPos = playerObj.transform.position;
+
+            foreach (var e in _edges)
             {
-                Vector2 offset = Random.insideUnitCircle * 0.3f;
-                var wbc = Instantiate(wbcPrefab, (Vector3)(mid + offset), Quaternion.identity);
-                var wbcCode = wbc.GetComponent<WBCcode>();
+                var wbcs = _wbcsByEdge[e];
+                wbcs.RemoveAll(w => w == null);
+
+                Vector2 mid  = (e.from.pos + e.to.pos) * 0.5f;
+                float   dist = Vector2.Distance(playerPos, mid);
+
+                if (dist < wbcSpawnRange && wbcs.Count == 0)
+                {
+                    int count = Random.Range(1, maxWBCs + 1);
+                    for (int i = 0; i < count; i++)
+                    {
+                        Vector2 offset = Random.insideUnitCircle * e.from.radius * 0.5f;
+                        wbcs.Add(Instantiate(wbcPrefab, (Vector3)(mid + offset), Quaternion.identity));
+                    }
+                }
+                else if (dist > wbcDespawnRange && wbcs.Count > 0)
+                {
+                    foreach (var w in wbcs) if (w != null)
+                    {
+                        Destroy(w);
+                        Debug.Log($"'{w.gameObject.name}' destroyed");
+
+                    } 
+                    wbcs.Clear();
+                }
             }
         }
     }
@@ -596,7 +647,7 @@ public class VesselGenerator : MonoBehaviour
 
         SpawnPlayer();
         SpawnRBCs();
-        SpawnWBCs();
+        StartWBCStreaming();
 
         if (debugNavMesh)
             DrawNavMeshDebug();

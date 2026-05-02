@@ -2156,6 +2156,9 @@ MonoBehaviour:
   rbcsPerEdge: 5
   wbcPrefab: {fileID: 8022140845390627979, guid: a58e63ee3059f5c499de6b1b1372175f, type: 3}
   maxWBCs: 2
+  wbcSpawnRange: 30
+  wbcDespawnRange: 50
+  wbcStreamInterval: 0.5
   vesselFlowForce: 5
 --- !u!4 &792830762
 Transform:
