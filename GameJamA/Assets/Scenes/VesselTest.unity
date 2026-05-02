@@ -316,9 +316,17 @@ MonoBehaviour:
   veinColor: {r: 0.9803922, g: 0.9803922, b: 0.8235295, a: 1}
   debugWalls: 0
   debugNavMesh: 0
+  spriteMaterial: {fileID: 0}
   playerPrefab: {fileID: 2173277961497593036, guid: 4e4da2b37aa9b854586749adf2df7712, type: 3}
   spawnPlayer: 1
+  rbcPrefab: {fileID: 7262893337571285593, guid: 2cb8605b20b67f747acc71c11329a75f, type: 3}
+  rbcsPerEdge: 3
   wbcPrefab: {fileID: 8022140845390627979, guid: a58e63ee3059f5c499de6b1b1372175f, type: 3}
+  maxWBCs: 2
+  wbcSpawnRange: 100
+  wbcDespawnRange: 150
+  wbcStreamInterval: 0.5
+  vesselFlowForce: 5
 --- !u!4 &1114167943
 Transform:
   m_ObjectHideFlags: 0

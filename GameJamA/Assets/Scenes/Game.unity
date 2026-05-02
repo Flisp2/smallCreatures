@@ -2382,6 +2382,7 @@ MonoBehaviour:
   veinColor: {r: 0.3697757, g: 0.45179194, b: 0.83396226, a: 1}
   debugWalls: 1
   debugNavMesh: 0
+  spriteMaterial: {fileID: 2100000, guid: 9dfc825aed78fcd4ba02077103263b40, type: 2}
   playerPrefab: {fileID: 2173277961497593036, guid: 4e4da2b37aa9b854586749adf2df7712, type: 3}
   spawnPlayer: 1
   rbcPrefab: {fileID: 7262893337571285593, guid: 2cb8605b20b67f747acc71c11329a75f, type: 3}

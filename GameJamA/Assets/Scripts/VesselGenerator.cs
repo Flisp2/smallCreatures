@@ -25,6 +25,7 @@ public class VesselGenerator : MonoBehaviour
     public Color veinColor   = new Color(0.12f, 0.22f, 0.80f);
     public bool debugWalls = false;
     public bool debugNavMesh = false;
+    public Material spriteMaterial;
 
     [Header("Player")]
     public GameObject playerPrefab;
@@ -53,7 +54,7 @@ public class VesselGenerator : MonoBehaviour
 
     void Awake()
     {
-        _lineMat   = MakeLineMaterial();
+        _lineMat = spriteMaterial;
         /*Random.InitState(seed);
         BuildNetwork();
         FindTerminals();
@@ -122,8 +123,7 @@ public class VesselGenerator : MonoBehaviour
         tex.SetPixels(pixels);
         tex.Apply();
 
-        var mat = new Material(Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default"));
-        if (mat == null) mat = new Material(Shader.Find("Sprites/Default"));
+        var mat = new Material(spriteMaterial);
         mat.mainTexture = tex;
 
         var mr = go.AddComponent<MeshRenderer>();
@@ -692,19 +692,10 @@ public class VesselGenerator : MonoBehaviour
 
         go.AddComponent<MeshFilter>().mesh = mesh;
         var mr = go.AddComponent<MeshRenderer>();
-        mr.material = new Material(Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default")) { color = new Color(0f, 0.8f, 1f, 1f) };
+        mr.material = new Material(spriteMaterial) { color = new Color(0f, 0.8f, 1f, 1f) };
         mr.sortingOrder = 5;
     }
 
-    // ── Helpers ───────────────────────────────────────────────────
-
-    static Material MakeLineMaterial()
-    {
-        var mat = new Material(Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default"));
-        if (mat == null)
-            mat = new Material(Shader.Find("Sprites/Default"));
-        return mat;
-    }
 }
 
 class VesselNode
