@@ -478,6 +478,10 @@ public class VesselGenerator : MonoBehaviour
         foreach (var enemy in existingEnemies)
             Destroy(enemy);
 
+        var existingScenery = GameObject.FindGameObjectsWithTag("Scenery");
+        foreach (var scenery in existingScenery)
+            Destroy(scenery);
+
         // Regenerate the tree
         Random.InitState(seed);
         BuildNetwork();

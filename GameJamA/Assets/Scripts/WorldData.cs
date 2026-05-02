@@ -15,6 +15,7 @@ public class WorldData : MonoBehaviour
     public void SetLevelGen()
     {
         if (vesselGen == null) return; // Don't overwrite if already set in editor
+
         vesselGen.seed = System.DateTime.Now.Millisecond + currentLevel * 1000;
         vesselGen.maxDepth = 3 + currentLevel;
         vesselGen.minSegmentLength = 10f * (1f - currentLevel * 0.05f);
