@@ -523,6 +523,50 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 195419471}
   m_CullTransparentMesh: 1
+--- !u!1 &201726808
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 201726810}
+  - component: {fileID: 201726809}
+  m_Layer: 0
+  m_Name: GameData
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &201726809
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 201726808}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 66363857d552d62448499f783001e344, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WorldData
+--- !u!4 &201726810
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 201726808}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 2.06756, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &270884925
 GameObject:
   m_ObjectHideFlags: 0
@@ -2323,7 +2367,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 155cbe4d9848ab5469886b56ad7854f9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::VesselGenerator
-  seed: 42
+  seed: 1038
   maxDepth: 4
   startRadius: 8
   radiusDecay: 0.8
@@ -2336,7 +2380,7 @@ MonoBehaviour:
   terminateBaseChance: 0.053
   arteryColor: {r: 0.19358486, g: 0.24548459, b: 0.5999999, a: 1}
   veinColor: {r: 0.3697757, g: 0.45179194, b: 0.83396226, a: 1}
-  debugWalls: 0
+  debugWalls: 1
   debugNavMesh: 0
   playerPrefab: {fileID: 2173277961497593036, guid: 4e4da2b37aa9b854586749adf2df7712, type: 3}
   spawnPlayer: 1
@@ -4287,6 +4331,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b43544b52ef6e904aa282d14a12f6c34, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
+  square: {fileID: 0}
 --- !u!114 &2051922865
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4510,3 +4555,4 @@ SceneRoots:
   - {fileID: 979060465}
   - {fileID: 1714097688}
   - {fileID: 1011065454}
+  - {fileID: 201726810}

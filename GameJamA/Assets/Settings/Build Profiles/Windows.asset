@@ -26,6 +26,9 @@ MonoBehaviour:
   - m_enabled: 1
     m_path: Assets/Scenes/Game.unity
     m_guid: 1122ce2cc6c330f478d0e3432134651a
+  - m_enabled: 1
+    m_path: Assets/Scenes/CellScene.unity
+    m_guid: ab737585d6b1fe04484cc3dd08217a0c
   m_HasScriptingDefines: 0
   m_ScriptingDefines: []
   m_PlayerSettingsYaml:

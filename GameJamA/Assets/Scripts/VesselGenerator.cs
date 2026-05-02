@@ -85,49 +85,69 @@ public class VesselGenerator : MonoBehaviour
             if (!hasOutgoing.Contains(n)) _terminals.Add(n);
     }
 
-    void AssignSpecialRooms()
+    bool AssignSpecialRooms()
     {
-        if (_terminals.Count < 4)
-        {
-            Debug.LogWarning($"[VesselGenerator] Only {_terminals.Count} terminal vessels — need 4 for special rooms. Trying next seed.");
-            seed++;
-            GenerateNew();
-            return;
-        }
-
         var pool = new List<VesselNode>(_terminals);
-        for (int i = pool.Count - 1; i > 0; i--)
-        {
-            int j = Random.Range(0, i + 1);
-            (pool[i], pool[j]) = (pool[j], pool[i]);
-        }
-
-        PlaceRoomMarker(pool[0], Color.green);        // treasure
-        PlaceRoomMarker(pool[1], Color.black);        // trap
-        PlaceRoomMarker(pool[2], Color.black);        // trap
-        PlaceRoomMarker(pool[3], Color.red);          // boss
+        int j = Random.Range(0, pool.Count);
+ 
+        PlaceRoomMarker(pool[j], Color.green);        // treasure
+        // PlaceRoomMarker(pool[1], Color.black);        // trap
+        // PlaceRoomMarker(pool[2], Color.black);        // trap
+        // PlaceRoomMarker(pool[3], Color.red);          // boss
+        return true;
     }
 
     void PlaceRoomMarker(VesselNode node, Color color)
     {
-        var go = new GameObject("RoomMarker");
-        var lr = go.AddComponent<LineRenderer>();
-        lr.useWorldSpace = true;
-        lr.material = _lineMat;
-        lr.startColor = lr.endColor = color;
-        lr.startWidth = lr.endWidth = 1.5f;
-        lr.sortingOrder = 5;
+        VesselEdge inEdge = null;
+        foreach (var e in _edges)
+            if (e.to == node) { inEdge = e; break; }
+        Vector2 dir  = inEdge != null ? (node.pos - inEdge.from.pos).normalized : Vector2.up;
+        Vector2 perp = new Vector2(-dir.y, dir.x);
+        float   r    = node.radius;
 
-        const int segments = 32;
-        float radius = node.radius * 0.5f;
-        lr.positionCount = segments + 1;
-        for (int i = 0; i <= segments; i++)
+        var go = new GameObject("RoomMarker");
+        go.tag = "Scenery";
+
+        // Gradient texture: white, alpha sin-curve across vessel width (0 at edges, 1 at center)
+        const int texW = 64;
+        var tex = new Texture2D(texW, 1, TextureFormat.RGBA32, false);
+        tex.wrapMode = TextureWrapMode.Clamp;
+        var pixels = new Color[texW];
+        for (int i = 0; i < texW; i++)
         {
-            float angle = i * 2f * Mathf.PI / segments;
-            lr.SetPosition(i, new Vector3(
-                node.pos.x + Mathf.Cos(angle) * radius,
-                node.pos.y + Mathf.Sin(angle) * radius, 0f));
+            float alpha = Mathf.Sin((float)i / (texW - 1) * Mathf.PI);
+            pixels[i] = new Color(255f, 255f, 255f, alpha);
         }
+        tex.SetPixels(pixels);
+        tex.Apply();
+
+        var mat = new Material(Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default"));
+        if (mat == null) mat = new Material(Shader.Find("Sprites/Default"));
+        mat.mainTexture = tex;
+
+        var mr = go.AddComponent<MeshRenderer>();
+        mr.material = mat;
+        mr.sortingOrder = 5;
+
+        // Quad spanning vessel width (perp axis) with half-radius depth (dir axis)
+        float halfDepth = r * 0.5f;
+        Vector2 bl = node.pos - perp * r - dir * halfDepth;
+        Vector2 br = node.pos + perp * r - dir * halfDepth;
+        Vector2 tl = node.pos - perp * r + dir * halfDepth;
+        Vector2 tr = node.pos + perp * r + dir * halfDepth;
+        var mesh = new Mesh();
+        mesh.vertices  = new Vector3[] { bl, br, tl, tr };
+        mesh.uv        = new Vector2[] { Vector2.zero, Vector2.right, Vector2.up, Vector2.one };
+        mesh.triangles = new int[]     { 0, 2, 1, 2, 3, 1 };
+        mesh.RecalculateNormals();
+        go.AddComponent<MeshFilter>().mesh = mesh;
+
+        // Trigger: player entering loads CellScene
+        var poly = go.AddComponent<PolygonCollider2D>();
+        poly.isTrigger = true;
+        poly.SetPath(0, new Vector2[] { bl, br, tr, tl });
+        go.AddComponent<RoomMarkerTrigger>();
     }
 
     void BuildNetwork()
@@ -492,8 +512,15 @@ public class VesselGenerator : MonoBehaviour
         BuildNetwork();
         FindTerminals();
         BuildGeometry();
-        AssignSpecialRooms();
-        StartCoroutine(BakeNavMeshAsync());
+        // If special rooms were successfully assigned, bake the NavMesh and spawn entities. Otherwise try again with a new seed.
+        if (AssignSpecialRooms())
+        {
+            StartCoroutine(BakeNavMeshAsync());
+        } else
+        {
+            seed++;
+            GenerateNew();
+        }
     }
 
 
