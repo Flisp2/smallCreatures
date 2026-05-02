@@ -3642,6 +3642,22 @@ PrefabInstance:
       propertyPath: ChooseAbilityUI
       value: 
       objectReference: {fileID: 791230894}
+    - target: {fileID: 3060342313335150359, guid: 462dce074697c5c4c837d1e116a275f0, type: 3}
+      propertyPath: abilities.Array.size
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 3060342313335150359, guid: 462dce074697c5c4c837d1e116a275f0, type: 3}
+      propertyPath: 'abilities.Array.data[0]'
+      value: 
+      objectReference: {fileID: 11400000, guid: 38e91cdf6f4129e47a78151de5633015, type: 2}
+    - target: {fileID: 3060342313335150359, guid: 462dce074697c5c4c837d1e116a275f0, type: 3}
+      propertyPath: 'abilities.Array.data[1]'
+      value: 
+      objectReference: {fileID: 11400000, guid: 7ccc328ba95e4584a858ed78ff4b0ee4, type: 2}
+    - target: {fileID: 3060342313335150359, guid: 462dce074697c5c4c837d1e116a275f0, type: 3}
+      propertyPath: 'abilities.Array.data[2]'
+      value: 
+      objectReference: {fileID: 11400000, guid: 27b2393b0b9c4ae489ef7bead8e98436, type: 2}
     - target: {fileID: 3803707243549644250, guid: 462dce074697c5c4c837d1e116a275f0, type: 3}
       propertyPath: m_SortingOrder
       value: 1

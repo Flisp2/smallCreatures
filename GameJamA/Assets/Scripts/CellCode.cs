@@ -7,7 +7,7 @@ public class CellCode : MonoBehaviour
     public GameObject Pause;
     public GameObject Choice;
     public GameObject ChooseAbilityUI;
-    private List<Ability> abilities = new List<Ability>();
+    [SerializeField] private List<Ability> abilities = new List<Ability>();
     private List<Ability> pickedAbilities = new List<Ability>();
     private void Awake()
     {
@@ -15,17 +15,20 @@ public class CellCode : MonoBehaviour
         Choice.SetActive(false);
         ChooseAbilityUI.SetActive(false);
 #if UNITY_EDITOR
-        string path = Application.dataPath + "/Scripts/Abilities/AbilityObjects";
-        foreach (string file in System.IO.Directory.GetFiles(path, "*.asset"))
+        if (abilities.Count == 0)
         {
-            string relativePath = "Assets" + file.Replace(Application.dataPath, "").Replace("\\", "/");
-            Ability ability = UnityEditor.AssetDatabase.LoadAssetAtPath<Ability>(relativePath);
-            if (ability != null)
+            string path = Application.dataPath + "/Scripts/Abilities/AbilityObjects";
+            foreach (string file in System.IO.Directory.GetFiles(path, "*.asset"))
             {
-                abilities.Add(ability);
+                string relativePath = "Assets" + file.Replace(Application.dataPath, "").Replace("\\", "/");
+                Ability ability = UnityEditor.AssetDatabase.LoadAssetAtPath<Ability>(relativePath);
+                if (ability != null)
+                {
+                    abilities.Add(ability);
+                }
             }
+            Debug.Log($"Loaded {abilities.Count} abilities.");
         }
-        Debug.Log($"Loaded {abilities.Count} abilities.");
 #endif
     }
     private void OnTriggerEnter2D(Collider2D collision)
