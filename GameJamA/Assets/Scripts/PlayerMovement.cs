@@ -9,8 +9,8 @@ public class PlayerCode : MonoBehaviour
     private Animator ani;
 
     //Player Stats//
-    public float maxHealth = 10f;
-    [SerializeField] private float currentHealth = 10f;
+    public float maxHealth = 5f;
+    [SerializeField] private float currentHealth = 5f;
     public float stunTime = 0f;
     public float speed = 5f;
     public float baseSpeed = 5f;
@@ -32,6 +32,7 @@ public class PlayerCode : MonoBehaviour
         rb = GetComponent<Rigidbody2D>();
         PlayerAudio = GetComponent<AudioSource>();
         ani = GetComponent<Animator>();
+
     }
     private void Start()
     {
@@ -174,6 +175,7 @@ public class PlayerCode : MonoBehaviour
         Debug.Log("Player has died.");
         ani.SetTrigger("Death");
         StartCoroutine(SlowDownTime());
+        WorldData.DeathScreen();
         this.enabled = false;
     }
 
@@ -188,5 +190,10 @@ public class PlayerCode : MonoBehaviour
             yield return null;
         }
         Time.timeScale = 0f;
+    }
+
+    public void Quit()
+    {
+        Application.Quit();
     }
 }

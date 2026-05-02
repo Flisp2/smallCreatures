@@ -4,12 +4,38 @@ using UnityEngine.InputSystem;
 public class WorldData : MonoBehaviour
 {
     public static int currentLevel = 1;
+    public static GameObject Death;
+    public static GameObject Pause;
 
     private VesselGenerator vesselGen;
     void Awake()
     {
+        Death = GameObject.Find("Death");
+        Pause = GameObject.Find("Pause");
         vesselGen = GetComponent<VesselGenerator>();
+        if (vesselGen == null)
+        {
+            return;
+        }
+        if (Death != null && Pause != null)
+        {
+            Death.SetActive(false);
+            Pause.SetActive(false);
+        }
         SetLevelGen();
+    }
+
+    public static void DeathScreen()
+    {
+        Debug.Log("Player has died. Showing death screen.");
+        if (Death != null && Pause != null)
+        {
+            Death.SetActive(true);
+            Pause.SetActive(true);
+        } else
+        {
+            Debug.LogWarning("Death or Pause GameObject is not assigned in WorldData.");
+        }
     }
 
     public void SetLevelGen()
@@ -34,6 +60,22 @@ public class WorldData : MonoBehaviour
             Debug.Log("Advancing to level " + currentLevel);
             SetLevelGen();
         }
+    }
+
+    public void ResetLevel()
+    {
+        currentLevel = 1;
+        Time.timeScale = 1f;
+        if (GameObject.FindWithTag("Player") != null)
+        {
+            GameObject.FindWithTag("Player").GetComponent<PlayerCode>().enabled = true;
+        }
+        if (Death != null && Pause != null)
+        {
+            Death.SetActive(false);
+            Pause.SetActive(false);
+        }
+        SetLevelGen();
     }
 }
 
