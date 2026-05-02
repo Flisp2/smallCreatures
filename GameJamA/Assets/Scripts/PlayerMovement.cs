@@ -34,11 +34,6 @@ public class PlayerCode : MonoBehaviour
         ani = GetComponent<Animator>();
 
     }
-    private void Start()
-    {
-        ability1 = null;
-        ability2 = null;
-    }
 
     private void Update()
     {
@@ -174,6 +169,8 @@ public class PlayerCode : MonoBehaviour
     {
         Debug.Log("Player has died.");
         ani.SetTrigger("Death");
+        ability1 = null;
+        ability2 = null;
         StartCoroutine(SlowDownTime());
         WorldData.DeathScreen();
         this.enabled = false;

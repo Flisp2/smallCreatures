@@ -12,6 +12,7 @@ public class AbilityHolder : MonoBehaviour
     private TextMeshProUGUI levelText1;
     private TextMeshProUGUI levelText2;
     private PlayerCode playerCode;
+    public Sprite square;
     private void Start()
     {
         Image1 = transform.Find("Image1").gameObject;
@@ -39,6 +40,7 @@ public class AbilityHolder : MonoBehaviour
         }
         else
         {
+            Image1.GetComponent<UnityEngine.UI.Image>().sprite = square;
             Cooldown1.fillAmount = 0f;
             levelText1.text = "";
         }
@@ -51,6 +53,7 @@ public class AbilityHolder : MonoBehaviour
         }
         else
         {
+            Image1.GetComponent<UnityEngine.UI.Image>().sprite = square;
             Cooldown2.fillAmount = 0f;
             levelText2.text = "";
         }
