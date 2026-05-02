@@ -35,6 +35,8 @@ public class CellCode : MonoBehaviour
             PlayerCode playerCode = collision.GetComponent<PlayerCode>();
             if (playerCode != null)
             {
+                Cursor.visible = true;
+                Cursor.lockState = CursorLockMode.None;
                 Pause.SetActive(true);
                 Choice.SetActive(true);
                 pickedAbilities.Clear();
@@ -94,6 +96,12 @@ public class CellCode : MonoBehaviour
         Choice.SetActive(false);
         ChooseAbilityUI.SetActive(false);
         WorldData.currentLevel++;
+        if (WorldData.currentLevel > 4)
+        {
+            //UnityEngine.SceneManagement.SceneManager.LoadScene("Win");
+            Debug.Log("Player has won the game!");
+            return;
+        }
         UnityEngine.SceneManagement.SceneManager.LoadScene("Game");
     }
     private void RandomAbility(PlayerCode playerCode)

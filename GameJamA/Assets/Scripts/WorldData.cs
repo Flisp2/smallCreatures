@@ -30,6 +30,8 @@ public class WorldData : MonoBehaviour
         Debug.Log("Player has died. Showing death screen.");
         if (Death != null && Pause != null)
         {
+            Cursor.visible = true;
+            Cursor.lockState = CursorLockMode.None;
             Death.SetActive(true);
             Pause.SetActive(true);
         } else
@@ -42,6 +44,9 @@ public class WorldData : MonoBehaviour
     {
         if (vesselGen == null) return; // Don't overwrite if already set in editor
 
+        Cursor.visible = false;
+        Cursor.lockState = CursorLockMode.Locked;
+
         vesselGen.seed = System.DateTime.Now.Millisecond + currentLevel * 1000;
         vesselGen.maxDepth = 3 + currentLevel;
         vesselGen.minSegmentLength = 10f * (1f - currentLevel * 0.05f);
@@ -50,16 +55,6 @@ public class WorldData : MonoBehaviour
         vesselGen.branchAngleVariance = 25f - currentLevel * 1f;
         vesselGen.maxWBCs = 0 + currentLevel * 2;
         vesselGen.GenerateNew();
-    }
-
-    void Update()
-    {
-        if (Keyboard.current.nKey.wasPressedThisFrame)
-        {
-            currentLevel++;
-            Debug.Log("Advancing to level " + currentLevel);
-            SetLevelGen();
-        }
     }
 
     public void ResetLevel()

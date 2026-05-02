@@ -114,7 +114,7 @@ MonoBehaviour:
   currentHealth: 5
   stunTime: 0
   speed: 5
-  baseSpeed: 5
+  baseSpeed: 7
   isHidden: 0
   isInvulnerable: 0
   PlayerAudio: {fileID: 0}

@@ -2,10 +2,18 @@ using UnityEngine;
 
 public class MainMenu : MonoBehaviour
 {
+    public AudioSource musicSource;
+    public AudioClip musicClip;
     void Start()
     {
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
+        if (musicSource != null && musicClip != null)
+        {
+            musicSource.clip = musicClip;
+            musicSource.loop = true;
+            musicSource.Play();
+        }
     }
     public void StartGame()
     {
