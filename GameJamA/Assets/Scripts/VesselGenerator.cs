@@ -471,7 +471,8 @@ public class VesselGenerator : MonoBehaviour
 
             var triggerGO = new GameObject("TerminalTrigger");
             triggerGO.transform.SetParent(go.transform);
-            triggerGO.transform.position = (Vector3)(Vector2)leaf.pos;
+            // Step back into the vessel so the trigger overlaps before the wall stops the RBC
+            triggerGO.transform.position = (Vector3)(leaf.pos - dir * leaf.radius);
             var circle = triggerGO.AddComponent<CircleCollider2D>();
             circle.isTrigger = true;
             circle.radius = leaf.radius;

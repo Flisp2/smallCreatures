@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 6674328869576924518}
   - component: {fileID: 4457157014854779573}
   - component: {fileID: 136821371715109991}
+  - component: {fileID: 4637235287610067370}
   m_Layer: 0
   m_Name: RedBloodCell
   m_TagString: Untagged
@@ -157,3 +158,16 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 0
+--- !u!114 &4637235287610067370
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7262893337571285593}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5ba0ce1b0882b0940829a65d3a0ec030, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RBCcode
+  spinRange: 90

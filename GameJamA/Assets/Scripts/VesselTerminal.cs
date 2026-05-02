@@ -6,8 +6,13 @@ public class VesselTerminal : MonoBehaviour
 
     void OnTriggerEnter2D(Collider2D other)
     {
-        if (other.GetComponent<RBCcode>() == null) return;
-        Destroy(other.gameObject);
+        Debug.Log($"[VesselTerminal] trigger hit by '{other.gameObject.name}' (layer: {LayerMask.LayerToName(other.gameObject.layer)})");
+        var rb = other.attachedRigidbody;
+        if (rb == null) { Debug.Log("[VesselTerminal] no attachedRigidbody — skipping"); return; }
+        var rbc = rb.GetComponent<RBCcode>();
+        if (rbc == null) { Debug.Log($"[VesselTerminal] no RBCcode on '{rb.gameObject.name}' — skipping"); return; }
+        Debug.Log($"[VesselTerminal] destroying RBC '{rb.gameObject.name}' and respawning at root");
+        Destroy(rb.gameObject);
         generator.SpawnRBCAtRoot();
     }
 }
