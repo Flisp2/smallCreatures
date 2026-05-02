@@ -2139,7 +2139,7 @@ MonoBehaviour:
   maxDepth: 4
   startRadius: 8
   radiusDecay: 0.8
-  minSegmentLength: 10
+  minSegmentLength: 30
   maxSegmentLength: 50
   branchAngle: 30
   branchAngleVariance: 25

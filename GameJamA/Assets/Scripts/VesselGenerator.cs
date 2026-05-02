@@ -238,13 +238,48 @@ public class VesselGenerator : MonoBehaviour
 
         foreach (var (junction, children) in childEdges)
         {
-            VesselEdge eL = null, eR = null;
+            VesselEdge eL = null, eR = null, eS = null;
             foreach (var c in children)
             {
                 if (c.side == BranchSide.Left)  eL = c;
                 if (c.side == BranchSide.Right) eR = c;
+                if (c.side == BranchSide.None)  eS = c;
             }
-            if (eL == null || eR == null) continue;
+
+            // Straight branch — snap its wall starts to the parent's edges
+            if (eS != null && parentEdge.TryGetValue(junction, out VesselEdge peStraight))
+            {
+                Vector2 pd = (junction.pos - peStraight.from.pos).normalized;
+                Vector2 pp = new Vector2(-pd.y, pd.x);
+                outerWallStart[eS] = junction.pos + pp * junction.radius;
+                innerWallStart[eS] = junction.pos - pp * junction.radius;
+            }
+
+            if (eL == null && eR == null) continue;
+
+            // One branch was rejected by the intersection test — pivot its walls on the parent's edges
+            if (eL == null || eR == null)
+            {
+                VesselEdge single = eL ?? eR;
+                if (parentEdge.TryGetValue(junction, out VesselEdge ve))
+                {
+                    Vector2 parentDir  = (junction.pos - ve.from.pos).normalized;
+                    Vector2 parentPerp = new Vector2(-parentDir.y, parentDir.x);
+                    Vector2 j0 = junction.pos;
+                    float   r0 = junction.radius;
+                    if (single.side == BranchSide.Left)
+                    {
+                        outerWallStart[single] = j0 + parentPerp * r0;
+                        innerWallStart[single] = j0 - parentPerp * r0;
+                    }
+                    else
+                    {
+                        outerWallStart[single] = j0 - parentPerp * r0;
+                        innerWallStart[single] = j0 + parentPerp * r0;
+                    }
+                }
+                continue;
+            }
 
             float r    = junction.radius;
             Vector2 j  = junction.pos;
@@ -366,8 +401,8 @@ public class VesselGenerator : MonoBehaviour
         }
         else
         {
-            AddWall(go, a + perp * e.from.radius, endPlus);
-            AddWall(go, a - perp * e.from.radius, endMinus);
+            AddWall(go, outerStart ?? a + perp * e.from.radius, endPlus);
+            AddWall(go, innerStart ?? a - perp * e.from.radius, endMinus);
         }
 
         // nav area for NavMesh — trapezoid spanning the corridor interior
