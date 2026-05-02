@@ -10,6 +10,11 @@ public class Camo : Ability
         if (timer > 0f) return; 
         PlayerCode playerCode = user.GetComponent<PlayerCode>();
         SpriteRenderer sr = user.GetComponent<SpriteRenderer>();
+        AudioSource audioSource = user.GetComponent<AudioSource>();
+        if (audioSource != null)
+        {
+            audioSource.PlayOneShot(soundEffect);
+        }
         if (playerCode != null)
         {
             playerCode.isHidden = true;

@@ -14,8 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Spikes
   abilityName: Spikes
   cooldownTime: 20
-  timer: 9.516393
+  timer: 2.6152368
   level: 1
   icon: {fileID: 109871695347660471, guid: c4beb6a884a82234c9070d38bcdc0a27, type: 3}
+  soundEffect: {fileID: 8300000, guid: e99f690fd2c5f9342ac7248b7485f635, type: 3}
   spikeSprite: {fileID: -3699097630987226962, guid: d34b11c36c603fd439d19d139146fc69, type: 3}
   spikeDur: 3
