@@ -30,9 +30,16 @@ public class VesselGenerator : MonoBehaviour
     public GameObject playerPrefab;
     public bool spawnPlayer = true;
 
+    [Header("Red Blood Cells")]
+    public GameObject rbcPrefab;
+    public int rbcsPerEdge = 3;
+
     [Header("Enemies")]
     public GameObject wbcPrefab;
     public int maxWBCs = 2;
+
+    [Header("Blood Flow")]
+    public float vesselFlowForce = 5f;
 
     readonly List<VesselNode> _nodes = new();
     readonly List<VesselEdge> _edges = new();
@@ -379,6 +386,10 @@ public class VesselGenerator : MonoBehaviour
             b - perp * e.to.radius,
             a - perp * e.from.radius,
         });
+
+        var flow = walkable.AddComponent<VesselFlowZone>();
+        flow.flowDirection = dir;
+        flow.flowForce = vesselFlowForce;
     }
 
     void AddWall(GameObject parent, Vector2 p0, Vector2 p1)
@@ -457,10 +468,53 @@ public class VesselGenerator : MonoBehaviour
             go.transform.SetParent(parent.transform);
             var ec = go.AddComponent<EdgeCollider2D>();
             ec.SetPoints(new List<Vector2> { left, right });
+
+            var triggerGO = new GameObject("TerminalTrigger");
+            triggerGO.transform.SetParent(go.transform);
+            triggerGO.transform.position = (Vector3)(Vector2)leaf.pos;
+            var circle = triggerGO.AddComponent<CircleCollider2D>();
+            circle.isTrigger = true;
+            circle.radius = leaf.radius;
+            var terminal = triggerGO.AddComponent<VesselTerminal>();
+            terminal.generator = this;
         }
     }
 
     // ── spawning ────────────────────────────────────────────
+
+    void SpawnRBCs()
+    {
+        if (!rbcPrefab) return;
+        foreach (var e in _edges)
+        {
+            Vector2 dir  = (e.to.pos - e.from.pos).normalized;
+            Vector2 perp = new Vector2(-dir.y, dir.x);
+
+            for (int i = 0; i < rbcsPerEdge; i++)
+            {
+                float t = (i + 1f) / (rbcsPerEdge + 1f);
+                float lateralRange = Mathf.Lerp(e.from.radius, e.to.radius, t) * 0.6f;
+                Vector2 pos = Vector2.Lerp(e.from.pos, e.to.pos, t)
+                            + perp * Random.Range(-lateralRange, lateralRange);
+                Instantiate(rbcPrefab, (Vector3)pos, Quaternion.identity);
+            }
+        }
+    }
+
+    public void SpawnRBCAtRoot()
+    {
+        if (!rbcPrefab || _nodes.Count == 0) return;
+        VesselNode root = _nodes[0];
+        Vector2 pos = root.pos;
+        foreach (var e in _edges)
+        {
+            if (e.from != root) continue;
+            Vector2 perp = new Vector2(-(e.to.pos - root.pos).normalized.y, (e.to.pos - root.pos).normalized.x);
+            pos = root.pos + perp * Random.Range(-root.radius * 0.6f, root.radius * 0.6f);
+            break;
+        }
+        Instantiate(rbcPrefab, (Vector3)pos, Quaternion.identity);
+    }
 
     void SpawnWBCs()
     {
@@ -501,6 +555,7 @@ public class VesselGenerator : MonoBehaviour
         yield return surface.BuildNavMeshAsync();
 
         SpawnPlayer();
+        SpawnRBCs();
         SpawnWBCs();
 
         if (debugNavMesh)
