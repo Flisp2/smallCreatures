@@ -25,6 +25,8 @@ public class VesselGenerator : MonoBehaviour
     public bool debugWalls = false;
     public bool debugNavMesh = false;
     public Material spriteMaterial;
+    public Sprite SquareSprite;
+    public Material fadeMaterial;
 
     [Header("Player")]
     public GameObject playerPrefab;
@@ -465,6 +467,16 @@ public class VesselGenerator : MonoBehaviour
             ec.SetPoints(new List<Vector2> { left, right });
             var terminal = go.AddComponent<VesselTerminal>();
             terminal.generator = this;
+
+            var fadeGO = new GameObject("Fade");
+            fadeGO.transform.SetParent(go.transform);
+            fadeGO.transform.position = (Vector3)(leaf.pos - dir * 5f);
+            fadeGO.transform.localScale = new Vector3(leaf.radius * 2f, 10f, 1f);
+            fadeGO.transform.rotation = Quaternion.FromToRotation(Vector3.up, dir);
+            var fade = fadeGO.AddComponent<SpriteRenderer>();
+            fade.sprite = SquareSprite;
+            fade.material = fadeMaterial;
+            fade.sortingOrder = 1;
         }
     }
 
