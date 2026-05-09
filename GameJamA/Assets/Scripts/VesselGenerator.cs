@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using NavMeshPlus.Components;
 using NavMeshPlus.Extensions;
-using UnityEngine.InputSystem;
 
 public class VesselGenerator : MonoBehaviour
 {
@@ -22,7 +21,7 @@ public class VesselGenerator : MonoBehaviour
 
     [Header("Appearance")]
     public Color arteryColor = new Color(0.85f, 0.12f, 0.12f);
-    public Color veinColor   = new Color(0.12f, 0.22f, 0.80f);
+    public Color veinColor = new Color(0.12f, 0.22f, 0.80f);
     public bool debugWalls = false;
     public bool debugNavMesh = false;
     public Material spriteMaterial;
@@ -38,7 +37,7 @@ public class VesselGenerator : MonoBehaviour
     [Header("Enemies")]
     public GameObject wbcPrefab;
     public int maxWBCs = 2;
-    public float wbcSpawnRange   = 100f;
+    public float wbcSpawnRange = 100f;
     public float wbcDespawnRange = 150f;
     public float wbcStreamInterval = 0.5f;
 
@@ -52,103 +51,61 @@ public class VesselGenerator : MonoBehaviour
     Coroutine _wbcStreamCoroutine;
     Material _lineMat;
 
+    // ── Lifecycle ─────────────────────────────────────────────────────
+
     void Awake()
     {
         _lineMat = spriteMaterial;
-        /*Random.InitState(seed);
-        BuildNetwork();
-        FindTerminals();
-        BuildGeometry();
-        AssignSpecialRooms();
-        SpawnPlayer();*/
-
-        // Fit camera so the full tube width is visible — startRadius * 1.5 shows walls + breathing room
         if (Camera.main != null)
             Camera.main.orthographicSize = startRadius * 1.5f;
     }
 
-    void Start()
+    public void GenerateNew()
     {
-    }
-    void Update()
-    {
-        if (Keyboard.current.rKey.wasPressedThisFrame)
-            GenerateNew();
-    }
+        StopWBCStreaming();
+        _nodes.Clear();
+        _edges.Clear();
+        _terminals.Clear();
 
-    // ── Network generation ────────────────────────────────────────
+        var existingNetwork = GameObject.Find("VesselNetwork");
+        if (existingNetwork != null)
+            Destroy(existingNetwork);
 
-    void FindTerminals()
-    {
-        var hasOutgoing = new HashSet<VesselNode>();
-        foreach (var e in _edges) hasOutgoing.Add(e.from);
-        foreach (var n in _nodes)
-            if (!hasOutgoing.Contains(n)) _terminals.Add(n);
-    }
+        var existingNavSurface = GameObject.Find("NavSurface");
+        if (existingNavSurface != null)
+            Destroy(existingNavSurface);
 
-    bool AssignSpecialRooms()
-    {
-        var pool = new List<VesselNode>(_terminals);
-        int j = Random.Range(0, pool.Count);
- 
-        PlaceRoomMarker(pool[j], Color.green);        // treasure
-        // PlaceRoomMarker(pool[1], Color.black);        // trap
-        // PlaceRoomMarker(pool[2], Color.black);        // trap
-        // PlaceRoomMarker(pool[3], Color.red);          // boss
-        return true;
-    }
+        var existingNavMeshDebug = GameObject.Find("NavMeshDebug");
+        if (existingNavMeshDebug != null)
+            Destroy(existingNavMeshDebug);
 
-    void PlaceRoomMarker(VesselNode node, Color color)
-    {
-        VesselEdge inEdge = null;
-        foreach (var e in _edges)
-            if (e.to == node) { inEdge = e; break; }
-        Vector2 dir  = inEdge != null ? (node.pos - inEdge.from.pos).normalized : Vector2.up;
-        Vector2 perp = new Vector2(-dir.y, dir.x);
-        float   r    = node.radius;
+        var existingPlayer = GameObject.FindWithTag("Player");
+        if (existingPlayer != null)
+            Destroy(existingPlayer);
 
-        var go = new GameObject("RoomMarker");
-        go.tag = "Scenery";
+        var existingEnemies = GameObject.FindGameObjectsWithTag("Enemy");
+        foreach (var enemy in existingEnemies)
+            Destroy(enemy);
 
-        // Gradient texture: white, alpha sin-curve across vessel width (0 at edges, 1 at center)
-        const int texW = 64;
-        var tex = new Texture2D(texW, 1, TextureFormat.RGBA32, false);
-        tex.wrapMode = TextureWrapMode.Clamp;
-        var pixels = new Color[texW];
-        for (int i = 0; i < texW; i++)
+        var existingScenery = GameObject.FindGameObjectsWithTag("Scenery");
+        foreach (var scenery in existingScenery)
+            Destroy(scenery);
+
+        Random.InitState(seed);
+        BuildNetwork();
+        FindTerminals();
+        BuildGeometry();
+
+        if (AssignSpecialRooms())
+            StartCoroutine(BakeNavMeshAsync());
+        else
         {
-            float alpha = Mathf.Sin((float)i / (texW - 1) * Mathf.PI);
-            pixels[i] = new Color(255f, 255f, 255f, alpha);
+            seed++;
+            GenerateNew();
         }
-        tex.SetPixels(pixels);
-        tex.Apply();
-
-        var mat = new Material(spriteMaterial);
-        mat.mainTexture = tex;
-
-        var mr = go.AddComponent<MeshRenderer>();
-        mr.material = mat;
-        mr.sortingOrder = 5;
-
-        // Quad spanning vessel width (perp axis) with half-radius depth (dir axis)
-        float halfDepth = r * 0.5f;
-        Vector2 bl = node.pos - perp * r - dir * halfDepth;
-        Vector2 br = node.pos + perp * r - dir * halfDepth;
-        Vector2 tl = node.pos - perp * r + dir * halfDepth;
-        Vector2 tr = node.pos + perp * r + dir * halfDepth;
-        var mesh = new Mesh();
-        mesh.vertices  = new Vector3[] { bl, br, tl, tr };
-        mesh.uv        = new Vector2[] { Vector2.zero, Vector2.right, Vector2.up, Vector2.one };
-        mesh.triangles = new int[]     { 0, 2, 1, 2, 3, 1 };
-        mesh.RecalculateNormals();
-        go.AddComponent<MeshFilter>().mesh = mesh;
-
-        // Trigger: player entering loads CellScene
-        var poly = go.AddComponent<PolygonCollider2D>();
-        poly.isTrigger = true;
-        poly.SetPath(0, new Vector2[] { bl, br, tr, tl });
-        go.AddComponent<RoomMarkerTrigger>();
     }
+
+    // ── Network ───────────────────────────────────────────────────────
 
     void BuildNetwork()
     {
@@ -161,10 +118,9 @@ public class VesselGenerator : MonoBehaviour
     {
         if (depth <= 0) return;
 
-        float len   = Random.Range(minSegmentLength, maxSegmentLength);
-        float r     = parent.radius * radiusDecay;
+        float len = Random.Range(minSegmentLength, maxSegmentLength);
+        float r = parent.radius * radiusDecay;
         bool artery = parent.isArtery && depth > Mathf.Max(1, maxDepth - 2);
-
         Vector2 childPos = parent.pos + dir * len;
 
         // Reject branch if its tube would intersect any non-adjacent existing segment
@@ -204,37 +160,77 @@ public class VesselGenerator : MonoBehaviour
         }
     }
 
-    static Vector2 Rot(Vector2 v, float deg)
+    void FindTerminals()
     {
-        float rad = deg * Mathf.Deg2Rad;
-        float c = Mathf.Cos(rad), s = Mathf.Sin(rad);
-        return new Vector2(c * v.x - s * v.y, s * v.x + c * v.y);
+        var hasOutgoing = new HashSet<VesselNode>();
+        foreach (var e in _edges) hasOutgoing.Add(e.from);
+        foreach (var n in _nodes)
+            if (!hasOutgoing.Contains(n)) _terminals.Add(n);
     }
 
-    static float SegmentDist(Vector2 p0, Vector2 p1, Vector2 q0, Vector2 q1)
+    bool AssignSpecialRooms()
     {
-        Vector2 d1 = p1 - p0, d2 = q1 - q0, r = p0 - q0;
-        float a = Vector2.Dot(d1, d1), e = Vector2.Dot(d2, d2), f = Vector2.Dot(d2, r);
-        float s, t;
-        if (a <= 1e-6f && e <= 1e-6f) return r.magnitude;
-        if (a <= 1e-6f) { s = 0f; t = Mathf.Clamp01(f / e); }
-        else
+        var pool = new List<VesselNode>(_terminals);
+        int j = Random.Range(0, pool.Count);
+        PlaceRoomMarker(pool[j], Color.green);
+        return true;
+    }
+
+    void PlaceRoomMarker(VesselNode node, Color color)
+    {
+        VesselEdge inEdge = null;
+        foreach (var e in _edges)
+            if (e.to == node) { inEdge = e; break; }
+
+        Vector2 dir = inEdge != null ? (node.pos - inEdge.from.pos).normalized : Vector2.up;
+        Vector2 perp = new Vector2(-dir.y, dir.x);
+        float r = node.radius;
+
+        var go = new GameObject("RoomMarker");
+        go.tag = "Scenery";
+
+        // Gradient texture: white, alpha sin-curve across vessel width (0 at edges, 1 at center)
+        const int texW = 64;
+        var tex = new Texture2D(texW, 1, TextureFormat.RGBA32, false);
+        tex.wrapMode = TextureWrapMode.Clamp;
+        var pixels = new Color[texW];
+        for (int i = 0; i < texW; i++)
         {
-            float c = Vector2.Dot(d1, r);
-            if (e <= 1e-6f) { t = 0f; s = Mathf.Clamp01(-c / a); }
-            else
-            {
-                float b = Vector2.Dot(d1, d2), denom = a * e - b * b;
-                s = denom != 0f ? Mathf.Clamp01((b * f - c * e) / denom) : 0f;
-                t = (b * s + f) / e;
-                if      (t < 0f) { t = 0f; s = Mathf.Clamp01(-c / a); }
-                else if (t > 1f) { t = 1f; s = Mathf.Clamp01((b - c) / a); }
-            }
+            float alpha = Mathf.Sin((float)i / (texW - 1) * Mathf.PI);
+            pixels[i] = new Color(255f, 255f, 255f, alpha);
         }
-        return Vector2.Distance(p0 + s * d1, q0 + t * d2);
+        tex.SetPixels(pixels);
+        tex.Apply();
+
+        var mat = new Material(spriteMaterial);
+        mat.mainTexture = tex;
+
+        var mr = go.AddComponent<MeshRenderer>();
+        mr.material = mat;
+        mr.sortingOrder = 5;
+
+        // Quad spanning vessel width (perp axis) with half-radius depth (dir axis)
+        float halfDepth = r * 0.5f;
+        Vector2 bl = node.pos - perp * r - dir * halfDepth;
+        Vector2 br = node.pos + perp * r - dir * halfDepth;
+        Vector2 tl = node.pos - perp * r + dir * halfDepth;
+        Vector2 tr = node.pos + perp * r + dir * halfDepth;
+
+        var mesh = new Mesh();
+        mesh.vertices  = new Vector3[] { bl, br, tl, tr };
+        mesh.uv        = new Vector2[] { Vector2.zero, Vector2.right, Vector2.up, Vector2.one };
+        mesh.triangles = new int[]     { 0, 2, 1, 2, 3, 1 };
+        mesh.RecalculateNormals();
+        go.AddComponent<MeshFilter>().mesh = mesh;
+
+        // Trigger: player entering loads CellScene
+        var poly = go.AddComponent<PolygonCollider2D>();
+        poly.isTrigger = true;
+        poly.SetPath(0, new Vector2[] { bl, br, tr, tl });
+        go.AddComponent<RoomMarkerTrigger>();
     }
 
-    // ── Scene geometry ────────────────────────────────────────────
+    // ── Geometry ──────────────────────────────────────────────────────
 
     void BuildGeometry()
     {
@@ -256,10 +252,10 @@ public class VesselGenerator : MonoBehaviour
 
         // For each branching junction, compute where the two inner walls intersect
         // and where each outer wall ray exits the parent vessel's outer wall line.
-        var innerWallStart  = new Dictionary<VesselEdge, Vector2>();
-        var outerWallStart  = new Dictionary<VesselEdge, Vector2>();
-        var wallEndPlusPerp = new Dictionary<VesselEdge, Vector2>(); // end of parent's +perp wall
-        var wallEndMinusPerp= new Dictionary<VesselEdge, Vector2>(); // end of parent's -perp wall
+        var innerWallStart   = new Dictionary<VesselEdge, Vector2>();
+        var outerWallStart   = new Dictionary<VesselEdge, Vector2>();
+        var wallEndPlusPerp  = new Dictionary<VesselEdge, Vector2>(); // end of parent's +perp wall
+        var wallEndMinusPerp = new Dictionary<VesselEdge, Vector2>(); // end of parent's -perp wall
 
         foreach (var (junction, children) in childEdges)
         {
@@ -306,7 +302,7 @@ public class VesselGenerator : MonoBehaviour
                 continue;
             }
 
-            float r    = junction.radius;
+            float   r  = junction.radius;
             Vector2 j  = junction.pos;
             Vector2 dL = (eL.to.pos - j).normalized;
             Vector2 dR = (eR.to.pos - j).normalized;
@@ -315,10 +311,10 @@ public class VesselGenerator : MonoBehaviour
 
             // Left inner wall ray:  P1 = j - pL*r, dir = dL
             // Right inner wall ray: P2 = j + pR*r, dir = dR
-            Vector2 p1 = j - pL * r;
-            Vector2 p2 = j + pR * r;
+            Vector2 p1    = j - pL * r;
+            Vector2 p2    = j + pR * r;
             Vector2 delta = p2 - p1;
-            float cross = dL.x * dR.y - dL.y * dR.x; // dL × dR
+            float   cross = dL.x * dR.y - dL.y * dR.x; // dL × dR
 
             if (Mathf.Abs(cross) > 1e-4f)
             {
@@ -347,8 +343,8 @@ public class VesselGenerator : MonoBehaviour
                     float tL = r * (diffL.x * parentDir.y - diffL.y * parentDir.x) / crossL;
                     if (tL >= 0f)
                     {
-                        outerWallStart[eL]   = j + pL * r + tL * dL;
-                        wallEndPlusPerp[pe]  = outerWallStart[eL]; // parent +perp wall ends here
+                        outerWallStart[eL]  = j + pL * r + tL * dL;
+                        wallEndPlusPerp[pe] = outerWallStart[eL]; // parent +perp wall ends here
                     }
                 }
 
@@ -359,8 +355,8 @@ public class VesselGenerator : MonoBehaviour
                     float tR = r * (diffR.x * parentDir.y - diffR.y * parentDir.x) / crossR;
                     if (tR >= 0f)
                     {
-                        outerWallStart[eR]    = j - pR * r + tR * dR;
-                        wallEndMinusPerp[pe]  = outerWallStart[eR]; // parent -perp wall ends here
+                        outerWallStart[eR]   = j - pR * r + tR * dR;
+                        wallEndMinusPerp[pe] = outerWallStart[eR]; // parent -perp wall ends here
                     }
                 }
             }
@@ -370,16 +366,15 @@ public class VesselGenerator : MonoBehaviour
 
         foreach (var e in _edges)
         {
-            Vector2? iStart  = innerWallStart .TryGetValue(e, out Vector2 im) ? im : (Vector2?)null;
-            Vector2? oStart  = outerWallStart .TryGetValue(e, out Vector2 om) ? om : (Vector2?)null;
-            Vector2? endPlus = wallEndPlusPerp .TryGetValue(e, out Vector2 ep) ? ep : (Vector2?)null;
-            Vector2? endMinus= wallEndMinusPerp.TryGetValue(e, out Vector2 en) ? en : (Vector2?)null;
+            Vector2? iStart   = innerWallStart.TryGetValue(e, out Vector2 im)   ? im : (Vector2?)null;
+            Vector2? oStart   = outerWallStart.TryGetValue(e, out Vector2 om)   ? om : (Vector2?)null;
+            Vector2? endPlus  = wallEndPlusPerp.TryGetValue(e, out Vector2 ep)  ? ep : (Vector2?)null;
+            Vector2? endMinus = wallEndMinusPerp.TryGetValue(e, out Vector2 en) ? en : (Vector2?)null;
             MakeCorridor(e, root, iStart, oStart, endPlus, endMinus);
         }
 
         foreach (var n in _nodes)
         {
-            // MakeJunction(n, root);
             if (!hasChildren.Contains(n))
                 MakeEndCap(n, root);
         }
@@ -392,21 +387,20 @@ public class VesselGenerator : MonoBehaviour
         var go = new GameObject($"Seg_{e.from.depth}_{e.to.depth}");
         go.transform.SetParent(parent.transform);
 
-        Vector2 a = e.from.pos, b = e.to.pos;
+        Vector2 a    = e.from.pos, b = e.to.pos;
         float segLen = Vector2.Distance(a, b);
         Vector2 dir  = (b - a) / segLen;
         Vector2 perp = new Vector2(-dir.y, dir.x);
 
         var lr = go.AddComponent<LineRenderer>();
-        lr.useWorldSpace  = true;
-        lr.positionCount  = 2;
+        lr.useWorldSpace = true;
+        lr.positionCount = 2;
         lr.SetPosition(0, (Vector3)a);
         lr.SetPosition(1, (Vector3)b);
-        lr.startWidth = e.from.radius * 2f;
-        lr.endWidth   = e.to.radius   * 2f;
-        lr.material   = _lineMat;
-        Color col = e.from.isArtery ? arteryColor : veinColor;
-        lr.startColor = lr.endColor = col;
+        lr.startWidth   = e.from.radius * 2f;
+        lr.endWidth     = e.to.radius * 2f;
+        lr.material     = _lineMat;
+        lr.startColor   = lr.endColor = e.from.isArtery ? arteryColor : veinColor;
         lr.sortingOrder = -2;
 
         Vector2 endPlus  = wallEndPlusPerp  ?? b + perp * e.to.radius;
@@ -430,14 +424,12 @@ public class VesselGenerator : MonoBehaviour
             AddWall(go, innerStart ?? a - perp * e.from.radius, endMinus);
         }
 
-        // nav area for NavMesh — trapezoid spanning the corridor interior
+        // NavMesh walkable area — trapezoid spanning the corridor interior
         var walkable = new GameObject("Walkable");
         walkable.tag = "floor";
         walkable.transform.SetParent(go.transform);
+
         var poly = walkable.AddComponent<PolygonCollider2D>();
-        var NavWalkArea = walkable.AddComponent<NavMeshModifier>();
-        NavWalkArea.overrideArea = true;
-        NavWalkArea.area = UnityEngine.AI.NavMesh.GetAreaFromName("Walkable");
         poly.isTrigger = true;
         poly.SetPath(0, new Vector2[]
         {
@@ -447,9 +439,33 @@ public class VesselGenerator : MonoBehaviour
             a - perp * e.from.radius,
         });
 
+        var navWalkArea = walkable.AddComponent<NavMeshModifier>();
+        navWalkArea.overrideArea = true;
+        navWalkArea.area = UnityEngine.AI.NavMesh.GetAreaFromName("Walkable");
+
         var flow = walkable.AddComponent<VesselFlowZone>();
         flow.flowDirection = dir;
         flow.flowForce = vesselFlowForce;
+    }
+
+    void MakeEndCap(VesselNode leaf, GameObject parent)
+    {
+        foreach (var e in _edges)
+        {
+            if (e.to != leaf) continue;
+
+            Vector2 dir   = (e.to.pos - e.from.pos).normalized;
+            Vector2 perp  = new Vector2(-dir.y, dir.x);
+            Vector2 left  = leaf.pos + perp * leaf.radius;
+            Vector2 right = leaf.pos - perp * leaf.radius;
+
+            var go = new GameObject("Cap");
+            go.transform.SetParent(parent.transform);
+            var ec = go.AddComponent<EdgeCollider2D>();
+            ec.SetPoints(new List<Vector2> { left, right });
+            var terminal = go.AddComponent<VesselTerminal>();
+            terminal.generator = this;
+        }
     }
 
     void AddWall(GameObject parent, Vector2 p0, Vector2 p1)
@@ -472,87 +488,14 @@ public class VesselGenerator : MonoBehaviour
         lr.startColor = lr.endColor = Color.yellow;
         lr.sortingOrder = 10;
     }
-    public void GenerateNew()
+
+    // ── Spawning ──────────────────────────────────────────────────────
+
+    void SpawnPlayer()
     {
-        Debug.Log("Generating new vessel network with seed " + seed);
-        StopWBCStreaming();
-        _nodes.Clear();
-        _edges.Clear();
-        _terminals.Clear();
-
-        var existingNetwork = GameObject.Find("VesselNetwork");
-        if (existingNetwork != null)
-            Destroy(existingNetwork);
-
-        var existingNavSurface = GameObject.Find("NavSurface");
-        if (existingNavSurface != null)
-            Destroy(existingNavSurface);
-
-        var existingNavMeshDebug = GameObject.Find("NavMeshDebug");
-        if (existingNavMeshDebug != null)
-            Destroy(existingNavMeshDebug);
-
-        var existingPlayer = GameObject.FindWithTag("Player");
-        if (existingPlayer != null)
-        {
-            Debug.LogWarning("Player object still exists when generating new vessel network. Destroying it to prevent duplicates.");            
-            Destroy(existingPlayer);
-        }
-
-        var existingEnemies = GameObject.FindGameObjectsWithTag("Enemy");
-        foreach (var enemy in existingEnemies)
-            Destroy(enemy);
-
-        var existingScenery = GameObject.FindGameObjectsWithTag("Scenery");
-        foreach (var scenery in existingScenery)
-            Destroy(scenery);
-
-        // Regenerate the tree
-        Random.InitState(seed);
-        BuildNetwork();
-        FindTerminals();
-        BuildGeometry();
-        // If special rooms were successfully assigned, bake the NavMesh and spawn entities. Otherwise try again with a new seed.
-        if (AssignSpecialRooms())
-        {
-            StartCoroutine(BakeNavMeshAsync());
-        } else
-        {
-            seed++;
-            GenerateNew();
-        }
+        if (spawnPlayer && playerPrefab != null)
+            Instantiate(playerPrefab, (Vector3)_nodes[0].pos + Vector3.up * 0.5f, Quaternion.identity);
     }
-
-
-    // Seal the open end of a leaf segment so the player can't escape
-    void MakeEndCap(VesselNode leaf, GameObject parent)
-    {
-        foreach (var e in _edges)
-        {
-            if (e.to != leaf) continue;
-            Vector2 dir  = (e.to.pos - e.from.pos).normalized;
-            Vector2 perp = new Vector2(-dir.y, dir.x);
-            Vector2 left  = leaf.pos + perp * leaf.radius;
-            Vector2 right = leaf.pos - perp * leaf.radius;
-
-            var go = new GameObject("Cap");
-            go.transform.SetParent(parent.transform);
-            var ec = go.AddComponent<EdgeCollider2D>();
-            ec.SetPoints(new List<Vector2> { left, right });
-
-            var triggerGO = new GameObject("TerminalTrigger");
-            triggerGO.transform.SetParent(go.transform);
-            // Step back into the vessel so the trigger overlaps before the wall stops the RBC
-            triggerGO.transform.position = (Vector3)(leaf.pos - dir * leaf.radius);
-            var circle = triggerGO.AddComponent<CircleCollider2D>();
-            circle.isTrigger = true;
-            circle.radius = leaf.radius;
-            var terminal = triggerGO.AddComponent<VesselTerminal>();
-            terminal.generator = this;
-        }
-    }
-
-    // ── spawning ────────────────────────────────────────────
 
     void SpawnRBCs()
     {
@@ -600,10 +543,15 @@ public class VesselGenerator : MonoBehaviour
 
     void StopWBCStreaming()
     {
-        if (_wbcStreamCoroutine != null) { StopCoroutine(_wbcStreamCoroutine); _wbcStreamCoroutine = null; }
+        if (_wbcStreamCoroutine != null)
+        {
+            StopCoroutine(_wbcStreamCoroutine);
+            _wbcStreamCoroutine = null;
+        }
         foreach (var wbcs in _wbcsByEdge.Values)
         {
-            foreach (var w in wbcs) if (w != null) Destroy(w);
+            foreach (var w in wbcs)
+                if (w != null) Destroy(w);
             wbcs.Clear();
         }
         _wbcsByEdge.Clear();
@@ -638,24 +586,15 @@ public class VesselGenerator : MonoBehaviour
                 }
                 else if (dist > wbcDespawnRange && wbcs.Count > 0)
                 {
-                    foreach (var w in wbcs) if (w != null)
-                    {
-                        Destroy(w);
-                        Debug.Log($"'{w.gameObject.name}' destroyed");
-
-                    } 
+                    foreach (var w in wbcs)
+                        if (w != null) Destroy(w);
                     wbcs.Clear();
                 }
             }
         }
     }
-    void SpawnPlayer()
-    {
-        if (spawnPlayer && playerPrefab != null)
-            Instantiate(playerPrefab, (Vector3)_nodes[0].pos + Vector3.up * 0.5f, Quaternion.identity);
-    }
 
-    // ── NavMesh ───────────────────────────────────────────────────
+    // ── NavMesh ───────────────────────────────────────────────────────
 
     IEnumerator BakeNavMeshAsync()
     {
@@ -664,11 +603,10 @@ public class VesselGenerator : MonoBehaviour
         var surfaceGO = new GameObject("NavSurface");
         var surface = surfaceGO.AddComponent<NavMeshSurface>();
         surfaceGO.AddComponent<CollectSources2d>();
-
-        surfaceGO.transform.rotation = Quaternion.Euler(-90f, 0f, 0f); // Align NavMesh with XY plane
+        surfaceGO.transform.rotation = Quaternion.Euler(-90f, 0f, 0f); // align NavMesh with XY plane
 
         surface.collectObjects = CollectObjects.All;
-        surface.useGeometry    = UnityEngine.AI.NavMeshCollectGeometry.PhysicsColliders;
+        surface.useGeometry = UnityEngine.AI.NavMeshCollectGeometry.PhysicsColliders;
 
         yield return surface.BuildNavMeshAsync();
 
@@ -696,6 +634,37 @@ public class VesselGenerator : MonoBehaviour
         mr.sortingOrder = 5;
     }
 
+    // ── Math ──────────────────────────────────────────────────────────
+
+    static Vector2 Rot(Vector2 v, float deg)
+    {
+        float rad = deg * Mathf.Deg2Rad;
+        float c = Mathf.Cos(rad), s = Mathf.Sin(rad);
+        return new Vector2(c * v.x - s * v.y, s * v.x + c * v.y);
+    }
+
+    static float SegmentDist(Vector2 p0, Vector2 p1, Vector2 q0, Vector2 q1)
+    {
+        Vector2 d1 = p1 - p0, d2 = q1 - q0, r = p0 - q0;
+        float a = Vector2.Dot(d1, d1), e = Vector2.Dot(d2, d2), f = Vector2.Dot(d2, r);
+        float s, t;
+        if (a <= 1e-6f && e <= 1e-6f) return r.magnitude;
+        if (a <= 1e-6f) { s = 0f; t = Mathf.Clamp01(f / e); }
+        else
+        {
+            float c = Vector2.Dot(d1, r);
+            if (e <= 1e-6f) { t = 0f; s = Mathf.Clamp01(-c / a); }
+            else
+            {
+                float b = Vector2.Dot(d1, d2), denom = a * e - b * b;
+                s = denom != 0f ? Mathf.Clamp01((b * f - c * e) / denom) : 0f;
+                t = (b * s + f) / e;
+                if (t < 0f) { t = 0f; s = Mathf.Clamp01(-c / a); }
+                else if (t > 1f) { t = 1f; s = Mathf.Clamp01((b - c) / a); }
+            }
+        }
+        return Vector2.Distance(p0 + s * d1, q0 + t * d2);
+    }
 }
 
 class VesselNode
@@ -704,9 +673,13 @@ class VesselNode
     public readonly float   radius;
     public readonly int     depth;
     public readonly bool    isArtery;
+
     public VesselNode(Vector2 pos, float radius, int depth, bool isArtery)
     {
-        this.pos = pos; this.radius = radius; this.depth = depth; this.isArtery = isArtery;
+        this.pos = pos;
+        this.radius = radius;
+        this.depth = depth;
+        this.isArtery = isArtery;
     }
 }
 
@@ -716,8 +689,11 @@ class VesselEdge
 {
     public readonly VesselNode from, to;
     public readonly BranchSide side;
+
     public VesselEdge(VesselNode from, VesselNode to, BranchSide side = BranchSide.None)
     {
-        this.from = from; this.to = to; this.side = side;
+        this.from = from;
+        this.to = to;
+        this.side = side;
     }
 }
