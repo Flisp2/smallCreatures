@@ -53,7 +53,7 @@ public class AbilityHolder : MonoBehaviour
         }
         else
         {
-            Image1.GetComponent<UnityEngine.UI.Image>().sprite = square;
+            Image2.GetComponent<UnityEngine.UI.Image>().sprite = square;
             Cooldown2.fillAmount = 0f;
             levelText2.text = "";
         }
